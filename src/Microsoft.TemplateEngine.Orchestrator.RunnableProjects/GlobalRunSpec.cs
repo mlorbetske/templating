@@ -7,11 +7,11 @@ using Microsoft.TemplateEngine.Abstractions;
 using Microsoft.TemplateEngine.Abstractions.Mount;
 using Microsoft.TemplateEngine.Core;
 using Microsoft.TemplateEngine.Core.Contracts;
-using Microsoft.TemplateEngine.Core.Expressions.Cpp;
 using Microsoft.TemplateEngine.Core.Expressions.Cpp2;
 using Microsoft.TemplateEngine.Core.Operations;
 using Microsoft.TemplateEngine.Core.Util;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Config;
+using Microsoft.TemplateEngine.Utils;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 {
@@ -76,10 +76,22 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
             Operations = ResolveOperations(globalConfig, templateRoot, variables, parameters);
             List<KeyValuePair<IPathMatcher, IRunSpec>> specials = new List<KeyValuePair<IPathMatcher, IRunSpec>>();
 
+            IReadOnlyList<Guid> globalServices = Empty<Guid>.List.Value;
+            if (globalConfig is IGlobalRunConfigWithServiceList globalServiceList && globalServiceList.AvailableServices != null)
+            {
+                globalServices = globalServiceList.AvailableServices;
+            }
+
             if (fileGlobConfigs != null)
             {
                 foreach (KeyValuePair<string, IGlobalRunConfig> specialEntry in fileGlobConfigs)
                 {
+                    IReadOnlyList<Guid> allAvailableServices = globalServices;
+                    if (specialEntry.Value is IGlobalRunConfigWithServiceList serviceList && serviceList.AvailableServices != null)
+                    {
+                        allAvailableServices = globalServices.Union(serviceList.AvailableServices).ToList();
+                    }
+
                     IReadOnlyList<IOperationProvider> specialOps = null;
                     IVariableCollection specialVariables = variables;
 
@@ -89,7 +101,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
                         specialVariables = VariableCollection.SetupVariables(templateRoot.MountPoint.EnvironmentSettings, parameters, specialEntry.Value.VariableSetup);
                     }
 
-                    RunSpec spec = new RunSpec(specialOps, specialVariables ?? variables, specialEntry.Value.VariableSetup.FallbackFormat);
+                    RunSpec spec = new RunSpec(componentManager, allAvailableServices, specialOps, specialVariables ?? variables, specialEntry.Value?.VariableSetup?.FallbackFormat);
                     specials.Add(new KeyValuePair<IPathMatcher, IRunSpec>(new GlobbingPatternMatcher(specialEntry.Key), spec));
                 }
             }

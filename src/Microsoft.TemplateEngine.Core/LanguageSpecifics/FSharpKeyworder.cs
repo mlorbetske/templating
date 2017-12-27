@@ -6,7 +6,9 @@ namespace Microsoft.TemplateEngine.Core.LanguageSpecifics
 {
     public class FSharpKeyworder : IKeyworder
     {
-        public Guid Id { get; } = new Guid("DEE2BDBE-CE6A-4AC2-BB6F-702A497843E7");
+        public Guid Id { get; } = Identifier;
+
+        public static readonly Guid Identifier = new Guid("DEE2BDBE-CE6A-4AC2-BB6F-702A497843E7");
 
         // Keyword list from: https://docs.microsoft.com/en-us/dotnet/fsharp/language-reference/keyword-reference
         private static readonly ISet<string> ReservedWords = new HashSet<string>(StringComparer.Ordinal)

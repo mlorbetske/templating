@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
 using Microsoft.TemplateEngine.Core.Contracts;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 {
-    public class GlobalRunConfig : IGlobalRunConfig
+    public class GlobalRunConfig : IGlobalRunConfigWithServiceList
     {
         public IReadOnlyList<IOperationProvider> Operations { get; set; }
 
@@ -16,5 +17,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
         public IReadOnlyList<IReplacementTokens> Replacements { get; set; }
 
         public IReadOnlyList<ICustomOperationModel> CustomOperations { get; set; }
+
+        public IReadOnlyList<Guid> AvailableServices { get; set; }
     }
 }

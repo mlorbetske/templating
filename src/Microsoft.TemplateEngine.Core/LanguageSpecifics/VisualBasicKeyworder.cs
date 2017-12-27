@@ -6,7 +6,9 @@ namespace Microsoft.TemplateEngine.Core.LanguageSpecifics
 {
     public class VisualBasicKeyworder : IKeyworder
     {
-        public Guid Id { get; } = new Guid("4B7F76BF-A512-4287-BC18-EB5E14C5CDE9");
+        public Guid Id { get; } = Identifier;
+
+        public static readonly Guid Identifier = new Guid("4B7F76BF-A512-4287-BC18-EB5E14C5CDE9");
 
         // Keyword list from: https://docs.microsoft.com/en-us/dotnet/visual-basic/language-reference/keywords/
         private static readonly ISet<string> ReservedWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)

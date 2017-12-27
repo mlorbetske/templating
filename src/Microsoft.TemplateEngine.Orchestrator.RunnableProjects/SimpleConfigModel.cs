@@ -8,6 +8,7 @@ using Microsoft.TemplateEngine.Abstractions.Mount;
 using Microsoft.TemplateEngine.Core;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Core.Expressions.Cpp2;
+using Microsoft.TemplateEngine.Core.LanguageSpecifics;
 using Microsoft.TemplateEngine.Core.Operations;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Config;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Localization;
@@ -339,13 +340,16 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 
         private class SpecialOperationConfigParams
         {
-            public SpecialOperationConfigParams(string glob, string flagPrefix, string evaluatorName, ConditionalType type)
+            public SpecialOperationConfigParams(string glob, string flagPrefix, string evaluatorName, ConditionalType type, IReadOnlyList<Guid> availableServices = null)
             {
+                AvailableServices = availableServices ?? Empty<Guid>.List.Value;
                 EvaluatorName = evaluatorName;
                 Glob = glob;
                 FlagPrefix = flagPrefix;
                 ConditionalStyle = type;
             }
+
+            public IReadOnlyList<Guid> AvailableServices { get; }
 
             public string Glob { get; }
 
@@ -406,10 +410,10 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
                         new SpecialOperationConfigParams("**/*.yarnrc", "//", "C++", ConditionalType.CLineComments),
                         new SpecialOperationConfigParams("**/*.css.min", "/*", "C++", ConditionalType.CBlockComments),
                         new SpecialOperationConfigParams("**/*.css", "/*", "C++", ConditionalType.CBlockComments),
-                        new SpecialOperationConfigParams("**/*.cshtml", "@*", "C++", ConditionalType.Razor),
-                        new SpecialOperationConfigParams("**/*.vbhtml", "@*", "VB", ConditionalType.Razor),
-                        new SpecialOperationConfigParams("**/*.cs", "//", "C++", ConditionalType.CNoComments),
-                        new SpecialOperationConfigParams("**/*.fs", "//", "C++", ConditionalType.CNoComments),
+                        new SpecialOperationConfigParams("**/*.cshtml", "@*", "C++", ConditionalType.Razor, new []{CSharpKeyworder.Identifier}),
+                        new SpecialOperationConfigParams("**/*.vbhtml", "@*", "VB", ConditionalType.Razor, new[]{VisualBasicKeyworder.Identifier}),
+                        new SpecialOperationConfigParams("**/*.cs", "//", "C++", ConditionalType.CNoComments, new []{CSharpKeyworder.Identifier}),
+                        new SpecialOperationConfigParams("**/*.fs", "//", "C++", ConditionalType.CNoComments, new []{FSharpKeyworder.Identifier}),
                         new SpecialOperationConfigParams("**/*.c", "//", "C++", ConditionalType.CNoComments),
                         new SpecialOperationConfigParams("**/*.cpp", "//", "C++", ConditionalType.CNoComments),
                         new SpecialOperationConfigParams("**/*.cxx", "//", "C++", ConditionalType.CNoComments),
@@ -453,8 +457,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
                         new SpecialOperationConfigParams("**/*.tsx", "{/*", "C++", ConditionalType.JsxBlockComment),
                         new SpecialOperationConfigParams("**/*.xml", "<!--", "C++", ConditionalType.Xml),
                         new SpecialOperationConfigParams("**/*.resx", "<!--", "C++", ConditionalType.Xml),
-                        new SpecialOperationConfigParams("**/*.bas", "'", "VB", ConditionalType.VB),
-                        new SpecialOperationConfigParams("**/*.vb", "'", "VB", ConditionalType.VB),
+                        new SpecialOperationConfigParams("**/*.bas", "'", "VB", ConditionalType.VB, new[]{VisualBasicKeyworder.Identifier}),
+                        new SpecialOperationConfigParams("**/*.vb", "'", "VB", ConditionalType.VB, new[]{VisualBasicKeyworder.Identifier}),
                         new SpecialOperationConfigParams("**/*.xaml", "<!--", "C++", ConditionalType.Xml),
                         new SpecialOperationConfigParams("**/*.sln", "#-", "C++", ConditionalType.HashSignLineComment)
                     };
@@ -641,7 +645,14 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
                 }
             }
 
-            GlobalRunConfig config = new GlobalRunConfig()
+            IReadOnlyList<Guid> availableServices = defaultModel.AvailableServices;
+
+            if (customGlobModel is ICustomFileGlobModelWithServiceList serviceList && serviceList.AvailableServices != null)
+            {
+                availableServices = serviceList.AvailableServices;
+            }
+
+            GlobalRunConfig config = new GlobalRunConfig
             {
                 Operations = operations,
                 VariableSetup = variableConfig,
@@ -649,12 +660,13 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
                 ComputedMacros = computedMacros,
                 Replacements = macroGeneratedReplacements,
                 CustomOperations = customOperationConfig,
+                AvailableServices = availableServices,
             };
 
             return config;
         }
 
-        private void GenerateReplacementsForParameter(KeyValuePair<string, ISymbolModel> symbol, string replaces, string sourceVariable, List<IReplacementTokens> macroGeneratedReplacements)
+        private static void GenerateReplacementsForParameter(KeyValuePair<string, ISymbolModel> symbol, string replaces, string sourceVariable, List<IReplacementTokens> macroGeneratedReplacements)
         {
             TokenConfig replacementConfig = replaces.TokenConfigBuilder();
             if (symbol.Value.ReplacementContexts.Count > 0)
