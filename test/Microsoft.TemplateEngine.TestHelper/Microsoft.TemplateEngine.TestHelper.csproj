@@ -1,7 +1,7 @@
 ﻿<Project ToolsVersion="15.0" Sdk="Microsoft.NET.Sdk">
   <Import Project="..\..\Version.props" />
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.5;net452</TargetFrameworks>
+    <TargetFrameworks>netstandard1.5;$(FullFrameworkTestTargetFramework)</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Microsoft.TemplateEngine.Abstractions\Microsoft.TemplateEngine.Abstractions.csproj" />

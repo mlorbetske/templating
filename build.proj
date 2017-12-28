@@ -12,8 +12,6 @@
     <New3TargetFramework>netcoreapp1.1</New3TargetFramework>
     <InnerRingTargetFramework>netstandard1.3</InnerRingTargetFramework>
     <OuterRingTargetFramework>netstandard1.5</OuterRingTargetFramework>
-    <FullFrameworkTargetFramework>net45</FullFrameworkTargetFramework>
-    <FullFrameworkTestTargetFramework>net452</FullFrameworkTestTargetFramework>
 
     <InnerRingPackTargetFrameworks>$(InnerRingTargetFramework)</InnerRingPackTargetFrameworks>
     <InnerRingPackTargetFrameworks Condition="'$(IsFullFrameworkBuildSupported)' == 'true'">$(InnerRingPackTargetFrameworks);$(FullFrameworkTargetFramework)</InnerRingPackTargetFrameworks>
@@ -77,12 +75,12 @@
     <!-- Build the inner ring (abstractions, core, core contracts, etc.) -->
     <MSBuild Projects="$(InnerRingProjects)" Targets="Restore;Build"
              Condition="'$(EngineBuild)' == 'true'"
-             Properties="TargetFramework=$(InnerRingTargetFramework);Configuration=$(Configuration)"
+             Properties="Configuration=$(Configuration)"
              RunEachTargetSeparately="true" StopOnFirstFailure="true" />
 
     <MSBuild Projects="$(InnerRingProjects)" Targets="Restore;Build"
              Condition="'$(IsFullFrameworkBuildSupported)' == 'true' AND '$(EngineBuild)' == 'true'"
-             Properties="TargetFramework=$(FullFrameworkTargetFramework);Configuration=$(Configuration)"
+             Properties="Configuration=$(Configuration)"
              RunEachTargetSeparately="true" StopOnFirstFailure="true" />
 
 

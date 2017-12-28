@@ -1,7 +1,7 @@
 ﻿<Project ToolsVersion="15.0" Sdk="Microsoft.NET.Sdk">
   <Import Project="..\..\Version.props" />
   <PropertyGroup>
-    <TargetFramework>netcoreapp1.1</TargetFramework>
+    <TargetFrameworks>netcoreapp1.1;$(FullFrameworkTestTargetFramework)</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
     <Compile Update="ConditionalTests.*.cs" DependentUpon="ConditionalTests.cs" />

@@ -8,6 +8,9 @@
     <BUILD_NUMBER Condition="'$(BUILD_NUMBER)' == '0' And '$(BUILD_BUILDNUMBER)' != ''">$(BUILD_BUILDNUMBER)</BUILD_NUMBER>
     <AssemblyReleaseVersion>$(PackageReleaseVersion).0</AssemblyReleaseVersion>
     <PackageVersion Condition="'$(NO_TIMESTAMP)' != 'true'">$(PackageVersion)-$([System.DateTime]::Now.ToString("yyyyMMdd"))-$(BUILD_NUMBER)</PackageVersion>
+    <IsFullFrameworkBuildSupported Condition="'$(IsFullFrameworkBuildSupported)' == ''">false</IsFullFrameworkBuildSupported>
+    <FullFrameworkTargetFramework Condition="'$(IsFullFrameworkBuildSupported)' == 'true'">net45</FullFrameworkTargetFramework>
+    <FullFrameworkTestTargetFramework Condition="'$(IsFullFrameworkBuildSupported)' == 'true'">net452</FullFrameworkTestTargetFramework>
   </PropertyGroup>
   <PropertyGroup>
     <Authors>Microsoft</Authors>
