@@ -41,14 +41,14 @@ namespace Microsoft.TemplateEngine.Cli.Installers
             return paths.Exists(pkg);
         }
 
-        public IReadOnlyList<Guid> Install(IEngineEnvironmentSettings environmentSettings, IPaths paths, IReadOnlyList<string> installationRequests, IReadOnlyList<string> sources)
+        public IReadOnlyList<ScanResultEntry> Install(IEngineEnvironmentSettings environmentSettings, IPaths paths, IReadOnlyList<string> installationRequests, IReadOnlyList<string> sources)
         {
             return InstallLocalPackages(environmentSettings, installationRequests);
         }
 
-        public static IReadOnlyList<Guid> InstallLocalPackages(IEngineEnvironmentSettings environmentSettings, IReadOnlyList<string> packageNames)
+        public static IReadOnlyList<ScanResultEntry> InstallLocalPackages(IEngineEnvironmentSettings environmentSettings, IReadOnlyList<string> packageNames)
         {
-            List<Guid> resultingMountPointIds = new List<Guid>();
+            List<ScanResultEntry> resultingMountPointIds = new List<ScanResultEntry>();
             List<string> toInstall = new List<string>();
 
             foreach (string package in packageNames)
@@ -80,13 +80,13 @@ namespace Microsoft.TemplateEngine.Cli.Installers
                     {
                         string fullDirectory = new DirectoryInfo(pkg).FullName;
                         string fullPathGlob = Path.Combine(fullDirectory, pattern);
-                        ((SettingsLoader)(environmentSettings.SettingsLoader)).UserTemplateCache.Scan(fullPathGlob, out IReadOnlyList<Guid> contentMountPointIds);
+                        ((SettingsLoader)(environmentSettings.SettingsLoader)).UserTemplateCache.Scan(fullPathGlob, out IReadOnlyList<ScanResultEntry> contentMountPointIds);
                         resultingMountPointIds.AddRange(contentMountPointIds);
                     }
                     else if (environmentSettings.Host.FileSystem.DirectoryExists(pkg) || environmentSettings.Host.FileSystem.FileExists(pkg))
                     {
                         string packageLocation = new DirectoryInfo(pkg).FullName;
-                        ((SettingsLoader)(environmentSettings.SettingsLoader)).UserTemplateCache.Scan(packageLocation, out IReadOnlyList<Guid> contentMountPointIds);
+                        ((SettingsLoader)(environmentSettings.SettingsLoader)).UserTemplateCache.Scan(packageLocation, out IReadOnlyList<ScanResultEntry> contentMountPointIds);
                         resultingMountPointIds.AddRange(contentMountPointIds);
                     }
                     else

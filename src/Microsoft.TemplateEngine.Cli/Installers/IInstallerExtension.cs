@@ -1,7 +1,7 @@
-﻿using System;
 using System.Collections.Generic;
 using Microsoft.TemplateEngine.Abstractions;
 using Microsoft.TemplateEngine.Abstractions.PhysicalFileSystem;
+using Microsoft.TemplateEngine.Edge.Settings;
 
 namespace Microsoft.TemplateEngine.Cli.Installers
 {
@@ -11,6 +11,6 @@ namespace Microsoft.TemplateEngine.Cli.Installers
 
         bool CanHandle(IEngineEnvironmentSettings environmentSettings, IPaths paths, string installationRequest);
 
-        IReadOnlyList<Guid> Install(IEngineEnvironmentSettings environmentSettings, IPaths paths, IReadOnlyList<string> installationRequests, IReadOnlyList<string> sources);
+        IReadOnlyList<ScanResultEntry> Install(IEngineEnvironmentSettings environmentSettings, IPaths paths, IReadOnlyList<string> installationRequests, IReadOnlyList<string> sources);
     }
 }

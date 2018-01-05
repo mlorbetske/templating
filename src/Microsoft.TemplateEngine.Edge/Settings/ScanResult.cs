@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Microsoft.TemplateEngine.Abstractions;
 
@@ -10,16 +9,16 @@ namespace Microsoft.TemplateEngine.Edge.Settings
         {
             _localizations = new List<ILocalizationLocator>();
             _templates = new List<ITemplate>();
-            _installedMountPointIds = new List<Guid>();
+            _installedItems = new List<ScanResultEntry>();
         }
 
         private List<ILocalizationLocator> _localizations;
         private List<ITemplate> _templates;
-        private List<Guid> _installedMountPointIds;
+        private List<ScanResultEntry> _installedItems;
 
-        public void AddLocalization(ILocalizationLocator locater)
+        public void AddLocalization(ILocalizationLocator locator)
         {
-            _localizations.Add(locater);
+            _localizations.Add(locator);
         }
 
         public void AddTemplate(ITemplate template)
@@ -27,15 +26,15 @@ namespace Microsoft.TemplateEngine.Edge.Settings
             _templates.Add(template);
         }
 
-        public void AddInstalledMountPointId(Guid mountPointId)
+        public void AddInstalledMountPointId(ScanResultEntry entry)
         {
-            _installedMountPointIds.Add(mountPointId);
+            _installedItems.Add(entry);
         }
 
         public IReadOnlyList<ILocalizationLocator> Localizations => _localizations;
 
         public IReadOnlyList<ITemplate> Templates => _templates;
 
-        public IReadOnlyList<Guid> InstalledMountPointIds => _installedMountPointIds;
+        public IReadOnlyList<ScanResultEntry> InstalledItems => _installedItems;
     }
 }

@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using Microsoft.TemplateEngine.Abstractions;
 using Microsoft.TemplateEngine.Abstractions.PhysicalFileSystem;
+using Microsoft.TemplateEngine.Edge.Settings;
 
 namespace Microsoft.TemplateEngine.Cli.Installers
 {
@@ -15,6 +16,11 @@ namespace Microsoft.TemplateEngine.Cli.Installers
 
         public bool CanHandle(IEngineEnvironmentSettings environmentSettings, IPaths paths, string installationRequest)
         {
+            if (installationRequest.IndexOfAny(new[] { '/', '\\', '_', '-' }) > -1)
+            {
+                return false;
+            }
+
             if (installationRequest.IndexOf("::", StringComparison.Ordinal) < 0)
             {
                 installationRequest += "::*";
@@ -23,12 +29,12 @@ namespace Microsoft.TemplateEngine.Cli.Installers
             return Package.TryParse(installationRequest, out Package _);
         }
 
-        public IReadOnlyList<Guid> Install(IEngineEnvironmentSettings environmentSettings, IPaths paths, IReadOnlyList<string> installationRequests, IReadOnlyList<string> sources)
+        public IReadOnlyList<ScanResultEntry> Install(IEngineEnvironmentSettings environmentSettings, IPaths paths, IReadOnlyList<string> installationRequests, IReadOnlyList<string> sources)
         {
             return InstallRemotePackages(environmentSettings, paths, installationRequests, sources);
         }
 
-        private IReadOnlyList<Guid> InstallRemotePackages(IEngineEnvironmentSettings environmentSettings, IPaths paths, IReadOnlyList<string> installationReqeuests, IReadOnlyList<string> nuGetSources)
+        private IReadOnlyList<ScanResultEntry> InstallRemotePackages(IEngineEnvironmentSettings environmentSettings, IPaths paths, IReadOnlyList<string> installationReqeuests, IReadOnlyList<string> nuGetSources)
         {
             List<Package> packages = new List<Package>();
 
@@ -102,6 +108,5 @@ namespace Microsoft.TemplateEngine.Cli.Installers
             paths.DeleteDirectory(paths.User.ScratchDir);
             return LocalInstaller.InstallLocalPackages(environmentSettings, newLocalPackages);
         }
-
     }
 }

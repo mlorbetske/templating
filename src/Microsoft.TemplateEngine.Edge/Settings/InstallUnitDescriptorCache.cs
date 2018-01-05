@@ -39,13 +39,19 @@ namespace Microsoft.TemplateEngine.Edge.Settings
         [JsonProperty]
         public IReadOnlyDictionary<string, IInstallUnitDescriptor> Descriptors => _cache;
 
-        public bool TryAddDescriptorForLocation(Guid mountPointId)
+        public bool TryAddDescriptorForLocation(ScanResultEntry scanResultEntry)
         {
+            //TODO: Update this when update is available for components
+            if (scanResultEntry.Status == ScanResultStatus.Component)
+            {
+                return false;
+            }
+
             IMountPoint mountPoint = null;
 
             try
             {
-                if (!((SettingsLoader)(_environmentSettings.SettingsLoader)).TryGetMountPointFromId(mountPointId, out mountPoint))
+                if (!((SettingsLoader)(_environmentSettings.SettingsLoader)).TryGetMountPointFromId(scanResultEntry.MountPointId, out mountPoint))
                 {
                     return false;
                 }
@@ -81,7 +87,7 @@ namespace Microsoft.TemplateEngine.Edge.Settings
                     }
                 }
 
-                _installedItems[mountPointId] = uninstallString;
+                _installedItems[scanResultEntry.MountPointId] = uninstallString;
 
                 if (!InstallUnitDescriptorFactory.TryCreateFromMountPoint(_environmentSettings, mountPoint, out IReadOnlyList<IInstallUnitDescriptor> descriptorList))
                 {

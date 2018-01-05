@@ -30,16 +30,44 @@ namespace Microsoft.TemplateEngine.Edge.Settings
         {
             IReadOnlyList<string> directoriesToScan = DetermineDirectoriesToScan(baseDir);
             IReadOnlyList<MountPointScanSource> sourceList = SetupMountPointScanInfoForDirectories(directoriesToScan);
+            Dictionary<Guid, ScanResultEntry> scanResultEntryLookup = new Dictionary<Guid, ScanResultEntry>();
 
-            //TODO: This needs to be part of the scan result so that it can be added to the set of mount points
             ScanSourcesForComponents(sourceList, allowDevInstall);
+
+            //Catalog the things that contain components
+            //TODO: this will somehow need to account for packages
+            //  that are depended on by a component but do not carry
+            //  components themselves
+            foreach (MountPointScanSource source in sourceList)
+            {
+                if (source.AnythingFound)
+                {
+                    scanResultEntryLookup[source.MountPoint.Info.MountPointId] = new ScanResultEntry
+                    {
+                        Location = source.Location,
+                        MountPointId = source.MountPoint.Info.MountPointId,
+                        Status = ScanResultStatus.Component
+                    };
+                }
+            }
+
             ScanResult scanResult = ScanSourcesForTemplatesAndLangPacks(sourceList);
 
             foreach (MountPointScanSource source in sourceList)
             {
                 if (source.AnythingFound)
                 {
-                    scanResult.AddInstalledMountPointId(source.MountPoint.Info.MountPointId);
+                    if (!scanResultEntryLookup.TryGetValue(source.MountPoint.Info.MountPointId, out ScanResultEntry entry))
+                    {
+                        scanResultEntryLookup[source.MountPoint.Info.MountPointId] = entry = new ScanResultEntry
+                        {
+                            Location = source.Location,
+                            MountPointId = source.MountPoint.Info.MountPointId
+                        };
+                    }
+
+                    entry.Status |= ScanResultStatus.TemplateOrLocalizationPack;
+                    scanResult.AddInstalledMountPointId(entry);
                 }
 
                 if (source.MountPoint != null)

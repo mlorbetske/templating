@@ -32,7 +32,7 @@ namespace Microsoft.TemplateEngine.Cli
         public void InstallPackages(IEnumerable<string> installationRequests, IList<string> nuGetSources, bool debugAllowDevInstall)
         {
             IEnumerable<IInstallerExtension> installers = _environmentSettings.SettingsLoader.Components.OfType<IInstallerExtension>();
-            List<Guid> discoveredMountPoints = new List<Guid>();
+            List<ScanResultEntry> installationResults = new List<ScanResultEntry>();
 
             foreach (string installationRequest in installationRequests)
             {
@@ -43,20 +43,20 @@ namespace Microsoft.TemplateEngine.Cli
                         //TODO: Figure out a better way of handling installation requests,
                         //  right now they must be processed one at a time to avoid confusion
                         //  if not all of the requests succeed
-                        IReadOnlyList<Guid> mountPoints = installer.Install(_environmentSettings, _paths, new[] { installationRequest }, nuGetSources?.ToList());
+                        IReadOnlyList<ScanResultEntry> mountPoints = installer.Install(_environmentSettings, _paths, new[] { installationRequest }, nuGetSources?.ToList());
 
                         if (mountPoints.Count > 0)
                         {
-                            discoveredMountPoints.AddRange(mountPoints);
+                            installationResults.AddRange(mountPoints);
                             break;
                         }
                     }
                 }
             }
 
-            foreach (Guid mountPointId in discoveredMountPoints)
+            foreach (ScanResultEntry result in installationResults)
             {
-                ((SettingsLoader)(_environmentSettings.SettingsLoader)).InstallUnitDescriptorCache.TryAddDescriptorForLocation(mountPointId);
+                ((SettingsLoader)(_environmentSettings.SettingsLoader)).InstallUnitDescriptorCache.TryAddDescriptorForLocation(result);
             }
         }
 
