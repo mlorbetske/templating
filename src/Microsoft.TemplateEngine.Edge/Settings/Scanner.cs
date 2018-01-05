@@ -31,6 +31,7 @@ namespace Microsoft.TemplateEngine.Edge.Settings
             IReadOnlyList<string> directoriesToScan = DetermineDirectoriesToScan(baseDir);
             IReadOnlyList<MountPointScanSource> sourceList = SetupMountPointScanInfoForDirectories(directoriesToScan);
 
+            //TODO: This needs to be part of the scan result so that it can be added to the set of mount points
             ScanSourcesForComponents(sourceList, allowDevInstall);
             ScanResult scanResult = ScanSourcesForTemplatesAndLangPacks(sourceList);
 

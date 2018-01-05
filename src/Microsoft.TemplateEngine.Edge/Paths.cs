@@ -4,14 +4,19 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.PhysicalFileSystem;
 
 namespace Microsoft.TemplateEngine.Edge
 {
-    public class Paths
+    public class Paths : IPaths
     {
         private readonly IEngineEnvironmentSettings _environmentSettings;
 
+        IGlobalPaths IPaths.Global => Global;
+
         public GlobalPaths Global { get; }
+
+        IUserPaths IPaths.User => User;
 
         public UserPaths User { get; }
 
@@ -239,7 +244,7 @@ namespace Microsoft.TemplateEngine.Edge
             return cache ?? (cache = Path.Combine(paths));
         }
 
-        public class GlobalPaths
+        public class GlobalPaths : IGlobalPaths
         {
             private string _baseDir;
             private string _builtInsFeed;
@@ -275,7 +280,7 @@ namespace Microsoft.TemplateEngine.Edge
             public string DefaultInstallTemplateList => _parent.GetOrComputePath(ref _defaultInstallTemplateList, BaseDir, "defaultinstall.template.list");
         }
 
-        public class UserPaths
+        public class UserPaths : IUserPaths
         {
             private string _aliasesFile;
             private string _firstRunCookie;
