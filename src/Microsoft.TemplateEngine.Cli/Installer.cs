@@ -58,6 +58,8 @@ namespace Microsoft.TemplateEngine.Cli
             {
                 ((SettingsLoader)(_environmentSettings.SettingsLoader)).InstallUnitDescriptorCache.TryAddDescriptorForLocation(result);
             }
+
+            _environmentSettings.SettingsLoader.Save();
         }
 
         public IEnumerable<string> Uninstall(IEnumerable<string> uninstallRequests)

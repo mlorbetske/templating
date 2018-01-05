@@ -21,27 +21,44 @@ namespace Microsoft.TemplateEngine.Extensions.GitInstaller
 
         public IReadOnlyList<ScanResultEntry> Install(IEngineEnvironmentSettings environmentSettings, IPaths paths, IReadOnlyList<string> installationRequests, IReadOnlyList<string> sources)
         {
-            paths.CreateDirectory(paths.User.ScratchDir);
-
             List<string> newLocalPackages = new List<string>();
 
             foreach (string request in installationRequests)
             {
                 if (GitSource.TryParseGitSource(request, out GitSource source))
                 {
-                    string targetPath = $"{paths.User.ScratchDir}/{source.RepositoryName}";
+                    string targetPath = Path.Combine(paths.User.BaseDir, "Git", source.RepositoryName);
                     Git.Result processResult = Git.Clone(source.GitUrl, targetPath).Execute();
                     bool cloneSuccessful = processResult.ExitCode == 0;
                     if (cloneSuccessful)
                     {
-                        newLocalPackages.Add($"{targetPath}/{source.SubFolder}");
+                        newLocalPackages.Add(Path.Combine(targetPath, source.SubFolder));
                     }
                 }
             }
 
             IReadOnlyList<ScanResultEntry> result = LocalInstaller.InstallLocalPackages(environmentSettings, newLocalPackages);
-            SetAllFilesToNormal(environmentSettings.Host.FileSystem, paths.User.ScratchDir);
-            paths.DeleteDirectory(paths.User.ScratchDir);
+
+            foreach (ScanResultEntry entry in result)
+            {
+                string path = entry.Location;
+                SetAllFilesToNormal(environmentSettings.Host.FileSystem, path);
+                environmentSettings.Host.FileSystem.WriteAllText(Path.Combine(path, ".leave"), "");
+            }
+
+            foreach (string path in newLocalPackages)
+            {
+                string target = Path.Combine(path, ".leave");
+                if (paths.FileExists(target))
+                {
+                    paths.DeleteFile(target);
+                }
+                else
+                {
+                    paths.DeleteDirectory(path);
+                }
+            }
+
             return result;
         }
 
@@ -51,7 +68,7 @@ namespace Microsoft.TemplateEngine.Extensions.GitInstaller
             {
                 foreach (string file in fileSystem.EnumerateFiles(path, "*", SearchOption.AllDirectories))
                 {
-                    fileSystem.SetFileAttributes(path, FileAttributes.Normal);
+                    fileSystem.SetFileAttributes(file, FileAttributes.Normal);
                 }
             }
         }
