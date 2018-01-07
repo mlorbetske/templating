@@ -33,6 +33,7 @@ namespace Microsoft.TemplateEngine.Cli
         {
             IEnumerable<IInstallerExtension> installers = _environmentSettings.SettingsLoader.Components.OfType<IInstallerExtension>();
             List<ScanResultEntry> installationResults = new List<ScanResultEntry>();
+            bool installed = false;
 
             foreach (string installationRequest in installationRequests)
             {
@@ -48,9 +49,15 @@ namespace Microsoft.TemplateEngine.Cli
                         if (mountPoints.Count > 0)
                         {
                             installationResults.AddRange(mountPoints);
+                            installed = true;
                             break;
                         }
                     }
+                }
+
+                if (!installed)
+                {
+                    _environmentSettings.Host.OnNonCriticalError("InvalidPackageSpecification", string.Format(LocalizableStrings.CouldNotFindItemToInstall, installationRequest), null, 0);
                 }
             }
 
