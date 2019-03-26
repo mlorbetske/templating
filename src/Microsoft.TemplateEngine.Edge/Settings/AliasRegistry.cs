@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Utils;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Edge.Settings
 {
@@ -43,7 +43,13 @@ namespace Microsoft.TemplateEngine.Edge.Settings
             }
 
             string sourcesText = _paths.ReadAllText(_paths.User.AliasesFile, "{}");
-            JObject parsed = JObject.Parse(sourcesText);
+
+            if (!_environmentSettings.JsonDomFactory.TryParse(sourcesText, out IJsonToken parsed) || parsed.TokenType != JsonTokenType.Object)
+            {
+                _aliases = new AliasModel();
+                return;
+            }
+
             IReadOnlyDictionary<string, IReadOnlyList<string>> commandAliases = parsed.ToStringListDictionary(StringComparer.OrdinalIgnoreCase, "CommandAliases");
 
             _aliases = new AliasModel(commandAliases);
@@ -51,8 +57,7 @@ namespace Microsoft.TemplateEngine.Edge.Settings
 
         private void Save()
         {
-            AliasJsonSerializer serializer = new AliasJsonSerializer();
-            if (serializer.TrySerialize(_aliases, out string serialized))
+            if (AliasJsonSerializer.TrySerialize(_environmentSettings.JsonDomFactory, _aliases, out string serialized))
             {
                 _environmentSettings.Host.FileSystem.WriteAllText(_paths.User.AliasesFile, serialized);
             }

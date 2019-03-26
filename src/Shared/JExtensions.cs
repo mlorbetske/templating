@@ -1,43 +1,43 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Utils;
-using Newtonsoft.Json.Linq;
+using Microsoft.TemplateEngine.Utils.Json;
 
 namespace Microsoft.TemplateEngine
 {
     internal static class JExtensions
     {
-        public static string ToString(this JToken token, string key)
+        public static string ToString(this IJsonToken token, string key)
         {
             if (key == null)
             {
-                if (token == null || token.Type != JTokenType.String)
+                if (token == null || token.TokenType != JsonTokenType.String)
                 {
                     return null;
                 }
 
-                return token.ToString();
+                return ((IJsonValue)token).Value.ToString();
             }
 
-            JObject obj = token as JObject;
-
-            if (obj == null)
+            if (!(token is IJsonObject obj))
             {
                 return null;
             }
 
-            JToken element;
-            if (!obj.TryGetValue(key, StringComparison.OrdinalIgnoreCase, out element) || element.Type != JTokenType.String)
+            if (!obj.TryGetValue(key, StringComparison.OrdinalIgnoreCase, out IJsonToken element) || element.TokenType != JsonTokenType.String)
             {
                 return null;
             }
 
-            return element.ToString();
+            return ((IJsonValue)element).Value.ToString();
         }
 
-        public static bool ToBool(this JToken token, string key = null, bool defaultValue = false)
+        public static bool ToBool(this IJsonToken token, string key = null, bool defaultValue = false)
         {
-            JToken checkToken;
+            IJsonToken checkToken;
 
             // determine which token to bool-ify
             if (token == null)
@@ -48,15 +48,15 @@ namespace Microsoft.TemplateEngine
             {
                 checkToken = token;
             }
-            else if (! ((JObject)token).TryGetValue(key, StringComparison.OrdinalIgnoreCase, out checkToken))
+            else if (!((IJsonObject)token).TryGetValue(key, StringComparison.OrdinalIgnoreCase, out checkToken))
             {
                 return defaultValue;
             }
 
             // do the conversion on checkToken
-            if (checkToken.Type == JTokenType.Boolean || checkToken.Type == JTokenType.String)
+            if (checkToken.TokenType == JsonTokenType.Boolean || checkToken.TokenType == JsonTokenType.String)
             {
-                return string.Equals(checkToken.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+                return string.Equals(((IJsonValue)checkToken).Value.ToString(), "true", StringComparison.OrdinalIgnoreCase);
             }
             else
             {
@@ -64,36 +64,41 @@ namespace Microsoft.TemplateEngine
             }
         }
 
-        public static int ToInt32(this JToken token, string key = null, int defaultValue = 0)
+        public static int ToInt32(this IJsonToken token, string key = null, int defaultValue = 0)
         {
-            int value = defaultValue;
+            int value;
             if (key == null)
             {
-                if (token == null || token.Type != JTokenType.Integer || !int.TryParse(token.ToString(), out value))
+                if (token is IJsonValue valueToken)
                 {
-                    return defaultValue;
+                    if (token.TokenType == JsonTokenType.Number)
+                    {
+                        return (int)(double)valueToken.Value;
+                    }
+
+                    if (int.TryParse(valueToken.Value.ToString(), out value))
+                    {
+                        return value;
+                    }
                 }
 
-                return value;
+                return defaultValue;
             }
 
-            JObject obj = token as JObject;
-
-            if (obj == null)
+            if (!(token is IJsonObject obj))
             {
                 return defaultValue;
             }
 
-            JToken element;
-            if (!obj.TryGetValue(key, StringComparison.OrdinalIgnoreCase, out element))
+            if (!obj.TryGetValue(key, StringComparison.OrdinalIgnoreCase, out IJsonToken element))
             {
                 return defaultValue;
             }
-            else if (element.Type == JTokenType.Integer)
+            else if (element.TokenType == JsonTokenType.Number)
             {
                 return element.ToInt32();
             }
-            else if (int.TryParse(element.ToString(), out value))
+            else if (int.TryParse(((IJsonValue)element).Value.ToString(), out value))
             {
                 return value;
             }
@@ -101,12 +106,11 @@ namespace Microsoft.TemplateEngine
             return defaultValue;
         }
 
-        public static T ToEnum<T>(this JToken token, string key = null, T defaultValue = default(T))
+        public static T ToEnum<T>(this IJsonToken token, string key = null, T defaultValue = default)
             where T : struct
         {
             string val = token.ToString(key);
-            T result;
-            if (val == null || !Enum.TryParse(val, out result))
+            if (val == null || !Enum.TryParse(val, out T result))
             {
                 return defaultValue;
             }
@@ -114,11 +118,10 @@ namespace Microsoft.TemplateEngine
             return result;
         }
 
-        public static Guid ToGuid(this JToken token, string key = null, Guid defaultValue = default(Guid))
+        public static Guid ToGuid(this IJsonToken token, string key = null, Guid defaultValue = default)
         {
             string val = token.ToString(key);
-            Guid result;
-            if (val == null || !Guid.TryParse(val, out result))
+            if (val == null || !Guid.TryParse(val, out Guid result))
             {
                 return defaultValue;
             }
@@ -126,88 +129,94 @@ namespace Microsoft.TemplateEngine
             return result;
         }
 
-        public static IEnumerable<JProperty> PropertiesOf(this JToken token, string key = null)
+        public static IEnumerable<KeyValuePair<string, IJsonToken>> PropertiesOf(this IJsonToken token, string key = null)
         {
-            JObject obj = token as JObject;
-
-            if (obj == null)
+            if (!(token is IJsonObject obj))
             {
-                return Empty<JProperty>.List.Value;
+                return Empty<KeyValuePair<string, IJsonToken>>.List.Value;
             }
 
             if (key != null)
             {
-                JToken element;
-                if (!obj.TryGetValue(key, StringComparison.OrdinalIgnoreCase, out element))
+                if (!obj.ExtractValues((key, t => obj = t as IJsonObject)).Contains(key))
                 {
-                    return Empty<JProperty>.List.Value;
+                    return Empty<KeyValuePair<string, IJsonToken>>.List.Value;
                 }
-
-                obj = element as JObject;
             }
 
             if (obj == null)
             {
-                return Empty<JProperty>.List.Value;
+                return Empty<KeyValuePair<string, IJsonToken>>.List.Value;
             }
 
             return obj.Properties();
         }
 
-        public static T Get<T>(this JToken token, string key)
-            where T : JToken
+        public static T Get<T>(this IJsonToken token, string key)
+            where T : class, IJsonToken
         {
-            JObject obj = token as JObject;
-
-            if (obj == null)
+            if (!(token is IJsonObject obj))
             {
-                return default(T);
+                return default;
             }
 
-            JToken res;
-            if (!obj.TryGetValue(key, StringComparison.OrdinalIgnoreCase, out res))
+            if (!obj.TryGetValue(key, StringComparison.OrdinalIgnoreCase, out IJsonToken res))
             {
-                return default(T);
+                return default;
             }
 
             return res as T;
         }
 
-        public static IReadOnlyDictionary<string, string> ToStringDictionary(this JToken token, StringComparer comparer = null, string propertyName = null)
+        public static IReadOnlyDictionary<string, string> ToStringDictionary(this IJsonToken token, StringComparer comparer = null, string propertyName = null)
         {
             Dictionary<string, string> result = new Dictionary<string, string>(comparer ?? StringComparer.Ordinal);
 
-            foreach (JProperty property in token.PropertiesOf(propertyName))
+            foreach (KeyValuePair<string, IJsonToken> property in token.PropertiesOf(propertyName))
             {
-                if (property.Value == null || property.Value.Type != JTokenType.String)
+                if (property.Value == null || property.Value.TokenType != JsonTokenType.String)
                 {
                     continue;
                 }
 
-                result[property.Name] = property.Value.ToString();
+                result[property.Key] = ((IJsonValue)property.Value).Value.ToString();
             }
 
             return result;
         }
 
+        public static string GetJsonString(this IJsonToken token)
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                token.WriteToStream(ms);
+                ms.Position = 0;
+
+                using (StreamReader reader = new StreamReader(ms, Encoding.UTF8, true, 1024))
+                {
+                    return reader.ReadToEnd();
+                }
+            }
+        }
+
         // reads a dictionary whose values can either be string literals, or arrays of strings.
-        public static IReadOnlyDictionary<string, IReadOnlyList<string>> ToStringListDictionary(this JToken token, StringComparer comparer = null, string propertyName = null)
+        public static IReadOnlyDictionary<string, IReadOnlyList<string>> ToStringListDictionary(this IJsonToken token, StringComparer comparer = null, string propertyName = null)
         {
             Dictionary<string, IReadOnlyList<string>> result = new Dictionary<string, IReadOnlyList<string>>(comparer ?? StringComparer.Ordinal);
 
-            foreach (JProperty property in token.PropertiesOf(propertyName))
+            foreach (KeyValuePair<string, IJsonToken> property in token.PropertiesOf(propertyName))
             {
                 if (property.Value == null)
                 {
                     continue;
                 }
-                else if (property.Value.Type == JTokenType.String)
+                else if (property.Value.TokenType == JsonTokenType.String)
                 {
-                    result[property.Name] = new List<string>() { property.Value.ToString() };
+                    result[property.Key] = new List<string>() { ((IJsonValue)property.Value).Value.ToString() };
                 }
-                else if (property.Value.Type == JTokenType.Array)
+                else if (property.Value.TokenType == JsonTokenType.Array)
                 {
-                    result[property.Name] = property.Value.ArrayAsStrings();
+                    result[property.Key] = property.Value.ArrayAsStrings();
                 }
             }
 
@@ -215,67 +224,62 @@ namespace Microsoft.TemplateEngine
         }
 
         // Leaves the values as JTokens.
-        public static IReadOnlyDictionary<string, JToken> ToJTokenDictionary(this JToken token, StringComparer comparaer = null, string propertyName = null)
+        public static IReadOnlyDictionary<string, IJsonToken> ToJsonTokenDictionary(this IJsonToken token, StringComparer comparaer = null, string propertyName = null)
         {
-            Dictionary<string, JToken> result = new Dictionary<string, JToken>(comparaer ?? StringComparer.Ordinal);
+            Dictionary<string, IJsonToken> result = new Dictionary<string, IJsonToken>(comparaer ?? StringComparer.Ordinal);
 
-            foreach (JProperty property in token.PropertiesOf(propertyName))
+            foreach (KeyValuePair<string, IJsonToken> property in token.PropertiesOf(propertyName))
             {
-                result[property.Name] = property.Value;
+                result[property.Key] = property.Value;
             }
 
             return result;
         }
 
-        public static IReadOnlyList<string> ArrayAsStrings(this JToken token, string propertyName = null)
+        public static IReadOnlyList<string> ArrayAsStrings(this IJsonToken token, string propertyName = null)
         {
             if (propertyName != null)
             {
-                token = token.Get<JArray>(propertyName);
+                token = token.Get<IJsonArray>(propertyName);
             }
 
-            JArray arr = token as JArray;
-
-            if (arr == null)
+            if (!(token is IJsonArray arr))
             {
                 return Empty<string>.List.Value;
             }
 
             List<string> values = new List<string>();
 
-            foreach (JToken item in arr)
+            foreach (IJsonToken item in arr)
             {
-                if (item != null && item.Type == JTokenType.String)
+                if (item != null && item.TokenType == JsonTokenType.String)
                 {
-                    values.Add(item.ToString());
+                    values.Add(((IJsonValue)item).Value.ToString());
                 }
             }
 
             return values;
         }
 
-        public static IReadOnlyList<Guid> ArrayAsGuids(this JToken token, string propertyName = null)
+        public static IReadOnlyList<Guid> ArrayAsGuids(this IJsonToken token, string propertyName = null)
         {
             if (propertyName != null)
             {
-                token = token.Get<JArray>(propertyName);
+                token = token.Get<IJsonArray>(propertyName);
             }
 
-            JArray arr = token as JArray;
-
-            if (arr == null)
+            if (!(token is IJsonArray arr))
             {
                 return Empty<Guid>.List.Value;
             }
 
             List<Guid> values = new List<Guid>();
 
-            foreach (JToken item in arr)
+            foreach (IJsonToken item in arr)
             {
-                if (item != null && item.Type == JTokenType.String)
+                if (item != null && item.TokenType == JsonTokenType.String)
                 {
-                    Guid val;
-                    if (Guid.TryParse(item.ToString(), out val))
+                    if (Guid.TryParse(((IJsonValue)item).Value.ToString(), out Guid val))
                     {
                         values.Add(val);
                     }
@@ -285,26 +289,22 @@ namespace Microsoft.TemplateEngine
             return values;
         }
 
-        public static IEnumerable<T> Items<T>(this JToken token, string propertyName = null)
-            where T : JToken
+        public static IEnumerable<T> Items<T>(this IJsonToken token, string propertyName = null)
+            where T : IJsonToken
         {
             if (propertyName != null)
             {
-                token = token.Get<JArray>(propertyName);
+                token = token.Get<IJsonArray>(propertyName);
             }
 
-            JArray arr = token as JArray;
-
-            if (arr == null)
+            if (!(token is IJsonArray arr))
             {
                 yield break;
             }
 
-            foreach (JToken item in arr)
+            foreach (IJsonToken item in arr)
             {
-                T res = item as T;
-
-                if (res != null)
+                if (item is T res)
                 {
                     yield return res;
                 }

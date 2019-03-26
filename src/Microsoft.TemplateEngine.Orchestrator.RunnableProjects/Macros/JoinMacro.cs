@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros.Config;
 using Microsoft.TemplateEngine.Utils;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros
 {
@@ -94,18 +94,18 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros
             }
 
             string separator = string.Empty;
-            if (deferredConfig.Parameters.TryGetValue("separator", out JToken separatorToken))
+            if (deferredConfig.Parameters.TryGetValue("separator", out IJsonToken separatorToken))
             {
-                separator = separatorToken?.ToString();
+                separator = ((IJsonValue)separatorToken)?.Value?.ToString();
             }
 
             List<KeyValuePair<string, string>> symbolsList = new List<KeyValuePair<string, string>>();
-            if (deferredConfig.Parameters.TryGetValue("symbols", out JToken symbolsToken))
+            if (deferredConfig.Parameters.TryGetValue("symbols", out IJsonToken symbolsToken))
             {
-                JArray switchJArray = (JArray) symbolsToken;
-                foreach (JToken switchInfo in switchJArray)
+                IJsonArray switchArray = (IJsonArray) symbolsToken;
+                foreach (IJsonToken switchInfo in switchArray)
                 {
-                    JObject map = (JObject) switchInfo;
+                    IJsonObject map = (IJsonObject) switchInfo;
                     string condition = map.ToString("type");
                     string value = map.ToString("value");
                     symbolsList.Add(new KeyValuePair<string, string>(condition, value));

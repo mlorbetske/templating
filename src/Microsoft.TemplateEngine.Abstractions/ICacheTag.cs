@@ -1,8 +1,9 @@
 using System.Collections.Generic;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Abstractions
 {
-    public interface ICacheTag
+    public interface ICacheTag : IJsonSerializable<ICacheTag>
     {
         string Description { get; }
 

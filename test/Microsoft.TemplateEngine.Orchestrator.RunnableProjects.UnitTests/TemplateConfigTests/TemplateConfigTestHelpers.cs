@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using dotnet_new3;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Abstractions.Mount;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Mocks;
@@ -10,7 +11,6 @@ using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Config;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros;
 using Microsoft.TemplateEngine.TestHelper;
 using Microsoft.TemplateEngine.Utils;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.TemplateConfigTests
 {
@@ -43,8 +43,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             string fullPath = Path.Combine(mountPoint.Info.Place, configFile);
             string configContent = environment.Host.FileSystem.ReadAllText(fullPath);
 
-            JObject configJson = JObject.Parse(configContent);
-            return SimpleConfigModel.FromJObject(environment, configJson);
+            environment.JsonDomFactory.TryParse(configContent, out IJsonToken configToken);
+            return SimpleConfigModel.FromJson(environment, (IJsonObject)configToken);
         }
 
         public static IFileSystemInfo ConfigFileSystemInfo(IMountPoint mountPoint, string configFile = null)

@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Abstractions.PhysicalFileSystem;
 using Microsoft.TemplateEngine.Utils;
-using System.IO;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Cli.PostActionProcessors
 {
@@ -30,7 +30,7 @@ namespace Microsoft.TemplateEngine.Cli.PostActionProcessors
                 return false;
             }
 
-            if (!TryGetProjectFilesToAdd(environment, actionConfig, templateCreationResult, outputBasePath, out IReadOnlyList<string> projectFiles))
+            if (!TryGetProjectFilesToAdd(actionConfig, templateCreationResult, outputBasePath, out IReadOnlyList<string> projectFiles))
             {
                 environment.Host.LogMessage(LocalizableStrings.AddProjToSlnPostActionNoProjFiles);
                 return false;
@@ -63,7 +63,7 @@ namespace Microsoft.TemplateEngine.Cli.PostActionProcessors
 
         // The project files to add are a subset of the primary outputs, specifically the primary outputs indicated by the primaryOutputIndexes post action arg (semicolon separated)
         // If any indexes are out of range or non-numeric, thsi method returns false and projectFiles is set to null.
-        internal static bool TryGetProjectFilesToAdd(IEngineEnvironmentSettings environment, IPostAction actionConfig, ICreationResult templateCreationResult, string outputBasePath, out IReadOnlyList<string> projectFiles)
+        internal static bool TryGetProjectFilesToAdd(IPostAction actionConfig, ICreationResult templateCreationResult, string outputBasePath, out IReadOnlyList<string> projectFiles)
         {
             if ((actionConfig.Args != null) && actionConfig.Args.TryGetValue("primaryOutputIndexes", out string projectIndexes))
             {
@@ -117,19 +117,18 @@ namespace Microsoft.TemplateEngine.Cli.PostActionProcessors
 
             if (action.Args.TryGetValue("projectFiles", out string configProjectFiles))
             {
-                JToken config = JToken.Parse(configProjectFiles);
                 List<string> allProjects = new List<string>();
 
-                if (config is JArray arr)
+                if (environment.JsonDomFactory.TryParse(configProjectFiles, out IJsonToken config) && config is IJsonArray arr)
                 {
-                    foreach (JToken globText in arr)
+                    foreach (IJsonToken globText in arr)
                     {
-                        if (globText.Type != JTokenType.String)
+                        if (globText.TokenType != JsonTokenType.String)
                         {
                             continue;
                         }
 
-                        foreach (string path in GetTargetForSource(creationEffects, globText.ToString()))
+                        foreach (string path in GetTargetForSource(creationEffects, ((IJsonValue)globText).Value.ToString()))
                         {
                             if (Path.GetExtension(path).EndsWith("proj", StringComparison.OrdinalIgnoreCase))
                             {
@@ -138,9 +137,9 @@ namespace Microsoft.TemplateEngine.Cli.PostActionProcessors
                         }
                     }
                 }
-                else if (config.Type == JTokenType.String)
+                else if (config.TokenType == JsonTokenType.String)
                 {
-                    foreach (string path in GetTargetForSource(creationEffects, config.ToString()))
+                    foreach (string path in GetTargetForSource(creationEffects, ((IJsonValue)config).Value.ToString()))
                     {
                         if (Path.GetExtension(path).EndsWith("proj", StringComparison.OrdinalIgnoreCase))
                         {

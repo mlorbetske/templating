@@ -1,23 +1,19 @@
 using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Edge.Settings
 {
-    internal class AliasJsonSerializer
+    internal static class AliasJsonSerializer
     {
-        public AliasJsonSerializer()
+        public static bool TrySerialize(IJsonDocumentObjectModelFactory domFactory, AliasModel aliasModel, out string serialized)
         {
-        }
-
-        public bool TrySerialize(AliasModel aliasModel, out string serialized)
-        {
-            JObject commandAliasesObject = new JObject();
+            IJsonObject commandAliasesObject = domFactory.CreateObject();
 
             foreach (KeyValuePair<string, IReadOnlyList<string>> alias in aliasModel.CommandAliases)
             {
-                if (JsonSerializerHelpers.TrySerializeIEnumerable(alias.Value, JsonSerializerHelpers.StringValueConverter, out JArray serializedAlias))
+                if (JsonSerializerHelpers.TrySerializeIEnumerable(domFactory, alias.Value, JsonSerializerHelpers.StringValueConverter, out IJsonArray serializedAlias))
                 {
-                    commandAliasesObject.Add(alias.Key, serializedAlias);
+                    commandAliasesObject.SetValue(alias.Key, serializedAlias);
                 }
                 else
                 {
@@ -26,10 +22,10 @@ namespace Microsoft.TemplateEngine.Edge.Settings
                 }
             }
 
-            JObject serializedObject = new JObject();
-            serializedObject.Add(nameof(aliasModel.CommandAliases), commandAliasesObject);
+            IJsonObject serializedObject = domFactory.CreateObject();
+            serializedObject.SetValue(nameof(aliasModel.CommandAliases), commandAliasesObject);
 
-            serialized = serializedObject.ToString();
+            serialized = serializedObject.GetJsonString();
             return true;
         }
     }

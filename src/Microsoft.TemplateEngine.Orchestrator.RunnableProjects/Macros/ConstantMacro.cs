@@ -1,8 +1,8 @@
 using System;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros.Config;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros
 {
@@ -59,12 +59,12 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros
                 throw new InvalidCastException("Couldn't cast the rawConfig as a GeneratedSymbolDeferredMacroConfig");
             }
 
-            if (!deferredConfig.Parameters.TryGetValue("value", out JToken valueToken))
+            if (!deferredConfig.Parameters.TryGetValue("value", out IJsonToken valueToken))
             {
                 throw new ArgumentNullException("value");
             }
 
-            string value = valueToken.ToString();
+            string value = ((IJsonValue)valueToken).Value.ToString();
             IMacroConfig realConfig = new ConstantMacroConfig(deferredConfig.DataType, deferredConfig.VariableName, value);
             return realConfig;
         }

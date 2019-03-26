@@ -1,8 +1,8 @@
 using System;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros.Config;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros
 {
@@ -62,14 +62,14 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros
                 throw new InvalidCastException("Couldn't cast the rawConfig as a GeneratedSymbolDeferredMacroConfig");
             }
 
-            if (!deferredConfig.Parameters.TryGetValue("format", out JToken formatToken))
+            if (!deferredConfig.Parameters.TryGetValue("format", out IJsonToken formatToken))
             {
                 throw new ArgumentNullException("format");
             }
-            string format = formatToken.ToString();
+            string format = ((IJsonValue)formatToken).Value.ToString();
 
             bool utc;
-            if (deferredConfig.Parameters.TryGetValue("utc", out JToken utcToken))
+            if (deferredConfig.Parameters.TryGetValue("utc", out IJsonToken utcToken))
             {
                 utc = utcToken.ToBool();
             }

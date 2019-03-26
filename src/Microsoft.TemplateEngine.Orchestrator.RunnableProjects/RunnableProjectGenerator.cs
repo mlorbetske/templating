@@ -6,14 +6,13 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Abstractions.Mount;
 using Microsoft.TemplateEngine.Abstractions.PhysicalFileSystem;
 using Microsoft.TemplateEngine.Core;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Config;
 using Microsoft.TemplateEngine.Utils;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 {
@@ -95,8 +94,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 
             try
             {
-                JObject srcObject = ReadJObjectFromIFile(file);
-                locModel = SimpleConfigModel.LocalizationFromJObject(srcObject);
+                IJsonObject srcObject = ReadJsonObjectFromIFile(file.MountPoint.EnvironmentSettings.JsonDomFactory, file);
+                locModel = SimpleConfigModel.LocalizationFromJson(srcObject);
                 return true;
             }
             catch (Exception ex)
@@ -230,33 +229,30 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 
         public bool TryGetTemplateFromConfigInfo(IFileSystemInfo templateFileConfig, out ITemplate template, IFileSystemInfo localeFileConfig = null, IFile hostTemplateConfigFile = null, string baselineName = null)
         {
-            IFile templateFile = templateFileConfig as IFile;
-
-            if (templateFile == null)
+            if (!(templateFileConfig is IFile templateFile))
             {
                 template = null;
                 return false;
             }
 
-            IFile localeFile = localeFileConfig as IFile;
             ITemplateEngineHost host = templateFileConfig.MountPoint.EnvironmentSettings.Host;
 
             try
             {
-                JObject baseSrcObject = ReadJObjectFromIFile(templateFile);
-                JObject srcObject = MergeAdditionalConfiguration(baseSrcObject, templateFileConfig);
+                IJsonObject baseSrcObject = ReadJsonObjectFromIFile(templateFileConfig.MountPoint.EnvironmentSettings.JsonDomFactory, templateFile);
+                IJsonObject srcObject = MergeAdditionalConfiguration(baseSrcObject, templateFileConfig);
 
-                JObject localeSourceObject = null;
-                if (localeFile != null)
+                IJsonObject localeSourceObject = null;
+                if (localeFileConfig is IFile localeFile)
                 {
-                    localeSourceObject = ReadJObjectFromIFile(localeFile);
+                    localeSourceObject = ReadJsonObjectFromIFile(templateFileConfig.MountPoint.EnvironmentSettings.JsonDomFactory, localeFile);
                 }
 
                 ISimpleConfigModifiers configModifiers = new SimpleConfigModifiers()
                 {
                     BaselineName = baselineName
                 };
-                SimpleConfigModel templateModel = SimpleConfigModel.FromJObject(templateFile.MountPoint.EnvironmentSettings, srcObject, configModifiers, localeSourceObject);
+                SimpleConfigModel templateModel = SimpleConfigModel.FromJson(templateFile.MountPoint.EnvironmentSettings, srcObject, configModifiers, localeSourceObject);
 
                 if (!PerformTemplateValidation(templateModel, templateFile, host))
                 {
@@ -395,9 +391,9 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 
         // Checks the primarySource for additional configuration files.
         // If found, merges them all together.
-        // Returns the merged JObject (or the original if there was nothing to merge).
+        // Returns the merged JSON Object (or the original if there was nothing to merge).
         // Additional files must be in the same dir as the template file.
-        private JObject MergeAdditionalConfiguration(JObject primarySource, IFileSystemInfo primarySourceConfig)
+        private IJsonObject MergeAdditionalConfiguration(IJsonObject primarySource, IFileSystemInfo primarySourceConfig)
         {
             IReadOnlyList<string> otherFiles = primarySource.ArrayAsStrings(AdditionalConfigFilesIndicator);
 
@@ -406,7 +402,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
                 return primarySource;
             }
 
-            JObject combinedSource = (JObject)primarySource.DeepClone();
+            IJsonObject combinedSource = (IJsonObject)primarySource.DeepClone();
 
             foreach (string partialConfigFileName in otherFiles)
             {
@@ -422,20 +418,21 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
                     throw new TemplateAuthoringException($"Split configuration file [{partialConfigFileName}] could not be found.", partialConfigFileName);
                 }
 
-                JObject partialConfigJson = ReadJObjectFromIFile(partialConfigFile);
+                IJsonObject partialConfigJson = ReadJsonObjectFromIFile(primarySource.Factory, partialConfigFile);
                 combinedSource.Merge(partialConfigJson);
             }
 
             return combinedSource;
         }
 
-        internal JObject ReadJObjectFromIFile(IFile file)
+        internal IJsonObject ReadJsonObjectFromIFile(IJsonDocumentObjectModelFactory domFactory, IFile file)
         {
             using (Stream s = file.OpenRead())
             using (TextReader tr = new StreamReader(s, true))
-            using (JsonReader r = new JsonTextReader(tr))
             {
-                return JObject.Load(r);
+                string jsonText = tr.ReadToEnd();
+                domFactory.TryParse(jsonText, out IJsonToken token);
+                return token as IJsonObject;
             }
         }
 
@@ -496,16 +493,15 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
                 }
                 else
                 {
-                    bool boolVal = false;
                     // Note: if the literal is ever null, it is probably due to a problem in TemplateCreator.Instantiate()
                     // which takes care of making null bool -> true as appropriate.
                     // This else can also happen if there is a value but it can't be converted.
                     string val;
-                    while (environmentSettings.Host.OnParameterError(param, null, "ParameterValueNotSpecified", out val) && !bool.TryParse(val, out boolVal))
+                    while (environmentSettings.Host.OnParameterError(param, null, "ParameterValueNotSpecified", out val) && !bool.TryParse(val, out _))
                     {
                     }
 
-                    valueResolutionError = !bool.TryParse(val, out boolVal);
+                    valueResolutionError = !bool.TryParse(val, out bool boolVal);
                     return boolVal;
                 }
             }
@@ -540,7 +536,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
                 else
                 {
                     string val;
-                    while (environmentSettings.Host.OnParameterError(param, null, "ValueNotValidMustBeFloat", out val) && (val == null || !double.TryParse(val, out convertedFloat)))
+                    while (environmentSettings.Host.OnParameterError(param, null, "ValueNotValidMustBeFloat", out val) && (val == null || !double.TryParse(val, out _)))
                     {
                     }
 
@@ -558,7 +554,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
                 else
                 {
                     string val;
-                    while (environmentSettings.Host.OnParameterError(param, null, "ValueNotValidMustBeInteger", out val) && (val == null || !long.TryParse(val, out convertedInt)))
+                    while (environmentSettings.Host.OnParameterError(param, null, "ValueNotValidMustBeInteger", out val) && (val == null || !long.TryParse(val, out _)))
                     {
                     }
 
@@ -575,7 +571,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
                 else
                 {
                     string val;
-                    while (environmentSettings.Host.OnParameterError(param, null, "ValueNotValidMustBeHex", out val) && (val == null || val.Length < 3 || !long.TryParse(val.Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out convertedHex)))
+                    while (environmentSettings.Host.OnParameterError(param, null, "ValueNotValidMustBeHex", out val) && (val == null || val.Length < 3 || !long.TryParse(val.Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out _)))
                     {
                     }
 

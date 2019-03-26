@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros.Config;
 using Microsoft.TemplateEngine.Utils;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros
 {
@@ -80,15 +80,15 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros
                 throw new InvalidCastException("Couldn't cast the rawConfig as a GeneratedSymbolDeferredMacroConfig");
             }
 
-            if (!deferredConfig.Parameters.TryGetValue("source", out JToken sourceVarToken))
+            if (!deferredConfig.Parameters.TryGetValue("source", out IJsonToken sourceVarToken))
             {
                 throw new ArgumentNullException("source");
             }
-            string sourceVariable = sourceVarToken.ToString();
+            string sourceVariable = ((IJsonValue)sourceVarToken).Value.ToString();
 
             bool lowerCase = true;
             List<KeyValuePair<string, string>> replacementSteps = new List<KeyValuePair<string, string>>();
-            if (deferredConfig.Parameters.TryGetValue("toLower", out JToken stepListToken))
+            if (deferredConfig.Parameters.TryGetValue("toLower", out IJsonToken stepListToken))
             {
                 lowerCase = stepListToken.ToBool(defaultValue: true);
             }

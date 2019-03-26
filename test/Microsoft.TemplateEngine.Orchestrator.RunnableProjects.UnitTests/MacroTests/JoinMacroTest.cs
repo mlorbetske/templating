@@ -1,12 +1,12 @@
-using System;
 using System.Collections.Generic;
+using dotnet_new3;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros.Config;
 using Microsoft.TemplateEngine.TestHelper;
-using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.MacroTests
@@ -67,13 +67,15 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Macro
             string referenceSymbolValue = "referenceValue";
             string constantValue = "constantValue";
 
-            Dictionary<string, JToken> jsonParameters = new Dictionary<string, JToken>();
+            Dictionary<string, IJsonToken> jsonParameters = new Dictionary<string, IJsonToken>();
             string symbols =
                 $"[ {{\"type\":\"const\" , \"value\":\"{constantValue}\"  }}, {{\"type\":\"ref\" , \"value\":\"{referenceSymbolName}\"  }} ]";
-            jsonParameters.Add("symbols", JArray.Parse(symbols));
+            IJsonDocumentObjectModelFactory domFactory = new JsonDomFactory();
+            domFactory.TryParse(symbols, out IJsonToken token);
+            jsonParameters.Add("symbols", (IJsonArray)token);
             if (!string.IsNullOrEmpty(separator))
             {
-                jsonParameters.Add("separator", separator);
+                jsonParameters.Add("separator", domFactory.CreateValue(separator));
             }
 
             GeneratedSymbolDeferredMacroConfig deferredConfig = new GeneratedSymbolDeferredMacroConfig("JoinMacro", null, variableName, jsonParameters);

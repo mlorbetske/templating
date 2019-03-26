@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Microsoft.TemplateEngine.Abstractions;
-using Newtonsoft.Json.Linq;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Localization
 {
@@ -11,11 +11,11 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Localization
         // original -> localized
         public IReadOnlyDictionary<string, string> Localizations { get; set; }
 
-        public static FileLocalizationModel FromJObject(string fileName, JObject fileSection)
+        public static FileLocalizationModel FromJson(string fileName, IJsonObject fileSection)
         {
             Dictionary<string, string> localizations = new Dictionary<string, string>();
 
-            foreach (JObject entry in fileSection.Items<JObject>("localizations"))
+            foreach (IJsonObject entry in fileSection.Items<IJsonObject>("localizations"))
             {
                 string original = entry.ToString("original");
                 string localized = entry.ToString("localization");

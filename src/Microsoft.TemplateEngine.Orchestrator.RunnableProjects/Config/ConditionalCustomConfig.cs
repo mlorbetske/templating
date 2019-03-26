@@ -1,14 +1,14 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Core.Operations;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Config
 {
     public static class ConditionalCustomConfig
     {
-        public static List<IOperationProvider> ConfigureFromJObject(JObject rawConfiguration)
+        public static List<IOperationProvider> ConfigureFromJson(IJsonObject rawConfiguration)
         {
             IReadOnlyList<string> ifToken = rawConfiguration.ArrayAsStrings("if");
             IReadOnlyList<string> elseToken = rawConfiguration.ArrayAsStrings("else");

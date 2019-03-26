@@ -1,8 +1,8 @@
 using System;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros.Config;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros
 {
@@ -79,11 +79,11 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros
                 throw new InvalidCastException("Couldn't cast the rawConfig as a GeneratedSymbolDeferredMacroConfig");
             }
 
-            deferredConfig.Parameters.TryGetValue("format", out JToken formatToken);
-            string format = formatToken?.ToString();
+            deferredConfig.Parameters.TryGetValue("format", out IJsonToken formatToken);
+            string format = ((IJsonValue)formatToken)?.Value?.ToString();
 
-            deferredConfig.Parameters.TryGetValue("defaultFormat", out JToken defaultFormatToken);
-            string defaultFormat = defaultFormatToken?.ToString();
+            deferredConfig.Parameters.TryGetValue("defaultFormat", out IJsonToken defaultFormatToken);
+            string defaultFormat = ((IJsonValue)defaultFormatToken)?.Value?.ToString();
 
             IMacroConfig realConfig = new GuidMacroConfig(deferredConfig.VariableName, deferredConfig.DataType, format, defaultFormat);
             return realConfig;

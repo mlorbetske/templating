@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Utils;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.ValueForms
 {
@@ -45,18 +45,18 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.ValueForms
         // If the symbol doesn't include an "identity" form and the addIdentity flag isn't false,
         // an identity specification is added to the beginning of the symbol's value form list.
         // If there is an identity form listed, its position remains intact irrespective of the addIdentity flag.
-        public static SymbolValueFormsModel FromJObject(JObject configJson)
+        public static SymbolValueFormsModel FromJson(IJsonObject configJson)
         {
-            JToken globalConfig = configJson.Property("global").Value;
+            IJsonToken globalConfig = configJson.Property("global").Value;
             List<string> globalForms;
             bool addIdentity;
-            if (globalConfig.Type == JTokenType.Array)
+            if (globalConfig.TokenType == JsonTokenType.Array)
             {
                 // config is just an array of form names.
                 globalForms = globalConfig.ArrayAsStrings().ToList();
                 addIdentity = true; // default value
             }
-            else if (globalConfig.Type == JTokenType.Object)
+            else if (globalConfig.TokenType == JsonTokenType.Object)
             {
                 // config is an object.
                 globalForms = globalConfig.ArrayAsStrings("forms").ToList();

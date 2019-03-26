@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Abstractions.PhysicalFileSystem;
 using Microsoft.TemplateEngine.Utils;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Cli.PostActionProcessors
 {
@@ -19,29 +19,30 @@ namespace Microsoft.TemplateEngine.Cli.PostActionProcessors
             IReadOnlyList<string> allTargets = null;
             if (action.Args.TryGetValue("targetFiles", out string singleTarget) && singleTarget != null)
             {
-                JToken config = JToken.Parse(singleTarget);
-
-                if (config.Type == JTokenType.String)
+                if (environment.JsonDomFactory.TryParse(singleTarget, out IJsonToken config))
                 {
-                    allTargets = singleTarget.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-                }
-                else if (config is JArray arr)
-                {
-                    List<string> parts = new List<string>();
-
-                    foreach (JToken token in arr)
+                    if (config.TokenType == JsonTokenType.String)
                     {
-                        if (token.Type != JTokenType.String)
+                        allTargets = singleTarget.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                    }
+                    else if (config is IJsonArray arr)
+                    {
+                        List<string> parts = new List<string>();
+
+                        foreach (IJsonToken token in arr)
                         {
-                            continue;
+                            if (token.TokenType != JsonTokenType.String)
+                            {
+                                continue;
+                            }
+
+                            parts.Add(((IJsonValue)token).Value.ToString());
                         }
 
-                        parts.Add(token.ToString());
-                    }
-
-                    if (parts.Count > 0)
-                    {
-                        allTargets = parts;
+                        if (parts.Count > 0)
+                        {
+                            allTargets = parts;
+                        }
                     }
                 }
             }

@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core.Contracts;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 {
@@ -31,14 +31,14 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
             return config;
         }
 
-        public static IVariableConfig FromJObject(JObject configData)
+        public static IVariableConfig FromJson(IJsonObject configData)
         {
             Dictionary<string, string> sourceFormats = new Dictionary<string, string>();
             List<string> order = new List<string>();
 
-            if (configData.TryGetValue("sources", System.StringComparison.OrdinalIgnoreCase, out JToken sourcesData))
+            if (configData.TryGetValue("sources", System.StringComparison.OrdinalIgnoreCase, out IJsonToken sourcesData))
             {
-                foreach (JObject source in (JArray)sourcesData)
+                foreach (IJsonObject source in (IJsonArray)sourcesData)
                 {
                     string name = source.ToString("name");
                     string format = source.ToString("format");

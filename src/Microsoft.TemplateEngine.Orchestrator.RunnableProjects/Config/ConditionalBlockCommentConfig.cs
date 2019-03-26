@@ -1,16 +1,16 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Core.Operations;
 using Microsoft.TemplateEngine.Utils;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Config
 {
     public static class ConditionalBlockCommentConfig
     {
-        public static List<IOperationProvider> ConfigureFromJObject(JObject rawConfiguration)
+        public static List<IOperationProvider> ConfigureFromJson(IJsonObject rawConfiguration)
         {
             string startToken = rawConfiguration.ToString("startToken");
             string endToken = rawConfiguration.ToString("endToken");
@@ -26,8 +26,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Config
 
             string pseudoEndToken = rawConfiguration.ToString("pseudoEndToken");
 
-            ConditionalKeywords keywords = ConditionalKeywords.FromJObject(rawConfiguration);
-            ConditionalOperationOptions options = ConditionalOperationOptions.FromJObject(rawConfiguration);
+            ConditionalKeywords keywords = ConditionalKeywords.FromJson(rawConfiguration);
+            ConditionalOperationOptions options = ConditionalOperationOptions.FromJson(rawConfiguration);
 
             if (string.IsNullOrWhiteSpace(pseudoEndToken))
             {

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.ValueForms
 {
@@ -26,7 +26,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.ValueForms
             return base.Process(forms, value).ToLowerInvariant();
         }
 
-        public override IValueForm FromJObject(string name, JObject configuration)
+        public override IValueForm FromJson(string name, IJsonObject configuration)
         {
             return new DefaultLowerSafeNamespaceValueFormModel(name);
         }

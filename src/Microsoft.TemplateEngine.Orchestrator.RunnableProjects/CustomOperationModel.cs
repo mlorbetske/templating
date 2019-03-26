@@ -1,5 +1,5 @@
-﻿using Microsoft.TemplateEngine.Core.Contracts;
-using Newtonsoft.Json.Linq;
+using Microsoft.TemplateEngine.Abstractions.Json;
+using Microsoft.TemplateEngine.Core.Contracts;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 {
@@ -9,15 +9,15 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 
         public string Condition { get; set; }
 
-        public JObject Configuration { get; set; }
+        public IJsonObject Configuration { get; set; }
 
-        public static ICustomOperationModel FromJObject(JObject jObject)
+        public static ICustomOperationModel FromJson(IJsonObject json)
         {
             CustomOperationModel model = new CustomOperationModel
             {
-                Type = jObject.ToString(nameof(Type)),
-                Condition = jObject.ToString(nameof(Condition)),
-                Configuration = jObject.Get<JObject>(nameof(Configuration)),
+                Type = json.ToString(nameof(Type)),
+                Condition = json.ToString(nameof(Condition)),
+                Configuration = json.Get<IJsonObject>(nameof(Configuration)),
             };
 
             return model;

@@ -18,7 +18,6 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.DotNet.Cli.CommandLine" />
         <PackageReference Include="System.Diagnostics.Process" />
-        <PackageReference Include="Newtonsoft.Json" />
         <PackageReference Include="SourceLink.Create.CommandLine" />
         <DotNetCliToolReference Include="dotnet-sourcelink" />
     </ItemGroup>

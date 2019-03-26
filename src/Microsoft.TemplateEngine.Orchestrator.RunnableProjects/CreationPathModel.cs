@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 {
@@ -9,7 +9,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 
         public string PathResolved { get; set; }
 
-        public static IReadOnlyList<ICreationPathModel> ListFromJArray(JArray jsonData)
+        public static IReadOnlyList<ICreationPathModel> ListFromJson(IJsonArray jsonData)
         {
             List<ICreationPathModel> modelList = new List<ICreationPathModel>();
 
@@ -18,7 +18,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
                 return modelList;
             }
 
-            foreach (JToken pathInfo in jsonData)
+            foreach (IJsonToken pathInfo in jsonData)
             {
                 ICreationPathModel pathModel = new CreationPathModel()
                 {

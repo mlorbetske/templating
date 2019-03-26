@@ -5,8 +5,8 @@ using Microsoft.TemplateEngine.Abstractions;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros.Config;
 using Microsoft.TemplateEngine.Core.Operations;
-using Newtonsoft.Json.Linq;
 using Microsoft.TemplateEngine.Core.Expressions.Cpp2;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros
 {
@@ -94,24 +94,24 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros
             }
 
             string evaluator = null;
-            if (deferredConfig.Parameters.TryGetValue("evaluator", out JToken evaluatorToken))
+            if (deferredConfig.Parameters.TryGetValue("evaluator", out IJsonToken evaluatorToken))
             {
-                evaluator = evaluatorToken.ToString();
+                evaluator = ((IJsonValue)evaluatorToken).Value.ToString();
             }
 
             string dataType = null;
-            if (deferredConfig.Parameters.TryGetValue("datatype", out JToken dataTypeToken))
+            if (deferredConfig.Parameters.TryGetValue("datatype", out IJsonToken dataTypeToken))
             {
-                dataType = dataTypeToken.ToString();
+                dataType = ((IJsonValue)dataTypeToken).Value.ToString();
             }
 
             List<KeyValuePair<string, string>> switchList = new List<KeyValuePair<string, string>>();
-            if (deferredConfig.Parameters.TryGetValue("cases", out JToken switchListToken))
+            if (deferredConfig.Parameters.TryGetValue("cases", out IJsonToken switchListToken))
             {
-                JArray switchJArray = (JArray)switchListToken;
-                foreach (JToken switchInfo in switchJArray)
+                IJsonArray switchArray = (IJsonArray)switchListToken;
+                foreach (IJsonToken switchInfo in switchArray)
                 {
-                    JObject map = (JObject)switchInfo;
+                    IJsonObject map = (IJsonObject)switchInfo;
                     string condition = map.ToString("condition");
                     string value = map.ToString("value");
                     switchList.Add(new KeyValuePair<string, string>(condition, value));

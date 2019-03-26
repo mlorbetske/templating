@@ -1,14 +1,15 @@
 using System;
 using System.Collections.Generic;
+using dotnet_new3;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros.Config;
 using Microsoft.TemplateEngine.TestHelper;
-using static Microsoft.TemplateEngine.Orchestrator.RunnableProjects.RunnableProjectGenerator;
-using Newtonsoft.Json.Linq;
 using Xunit;
+using static Microsoft.TemplateEngine.Orchestrator.RunnableProjects.RunnableProjectGenerator;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.MacroTests
 {
@@ -30,8 +31,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Macro
 
             NowMacro macro = new NowMacro();
             macro.EvaluateConfig(EngineEnvironmentSettings, variables, macroConfig, parameters, setter);
-            ITemplateParameter resultParam;
-            Assert.True(parameters.TryGetParameterDefinition(variableName, out resultParam));
+
+            Assert.True(parameters.TryGetParameterDefinition(variableName, out ITemplateParameter resultParam));
             string macroNowString = (string)parameters.ResolvedValues[resultParam];
             DateTime macroNowTime = Convert.ToDateTime(macroNowString);
 
@@ -48,9 +49,14 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Macro
             string variableName = "nowString";
             string format = "";
             bool utc = false;
-            Dictionary<string, JToken> jsonParameters = new Dictionary<string, JToken>();
-            jsonParameters.Add("format", format);
-            jsonParameters.Add("utc", utc);
+
+            IJsonDocumentObjectModelFactory domFactory = new JsonDomFactory();
+
+            Dictionary<string, IJsonToken> jsonParameters = new Dictionary<string, IJsonToken>
+            {
+                { "format", domFactory.CreateValue(format) },
+                { "utc", domFactory.CreateValue(utc) }
+            };
             GeneratedSymbolDeferredMacroConfig deferredConfig = new GeneratedSymbolDeferredMacroConfig("NowMacro", null, variableName, jsonParameters);
 
 
@@ -62,8 +68,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Macro
             NowMacro macro = new NowMacro();
             IMacroConfig realConfig = macro.CreateConfig(EngineEnvironmentSettings, deferredConfig);
             macro.EvaluateConfig(EngineEnvironmentSettings, variables, realConfig, parameters, setter);
-            ITemplateParameter resultParam;
-            Assert.True(parameters.TryGetParameterDefinition(variableName, out resultParam));
+
+            Assert.True(parameters.TryGetParameterDefinition(variableName, out ITemplateParameter resultParam));
             string macroNowString = (string)parameters.ResolvedValues[resultParam];
             DateTime macroNowTime = Convert.ToDateTime(macroNowString);
 

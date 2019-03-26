@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core.Contracts;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 {
@@ -17,13 +18,13 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 
         public string FlagPrefix { get; set; }
 
-        public static CustomFileGlobModel FromJObject(JObject globData, string globName)
+        public static CustomFileGlobModel FromJson(IJsonObject globData, string globName)
         {
             // setup the variable config
             IVariableConfig variableConfig;
-            if (globData.TryGetValue(nameof(VariableFormat), System.StringComparison.OrdinalIgnoreCase, out JToken variableData))
+            if (globData.TryGetValue(nameof(VariableFormat), StringComparison.OrdinalIgnoreCase, out IJsonToken variableData))
             {
-                variableConfig = VariableConfig.FromJObject((JObject)variableData);
+                variableConfig = VariableConfig.FromJson((IJsonObject)variableData);
             }
             else
             {
@@ -32,11 +33,11 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 
             // setup the custom operations
             List<ICustomOperationModel> customOpsForGlob = new List<ICustomOperationModel>();
-            if (globData.TryGetValue("Operations", StringComparison.OrdinalIgnoreCase, out JToken operationData))
+            if (globData.TryGetValue("Operations", StringComparison.OrdinalIgnoreCase, out IJsonToken operationData))
             {
-                foreach (JObject operationConfig in (JArray)operationData)
+                foreach (IJsonObject operationConfig in ((IJsonArray)operationData).OfType<IJsonObject>())
                 {
-                    customOpsForGlob.Add(CustomOperationModel.FromJObject(operationConfig));
+                    customOpsForGlob.Add(CustomOperationModel.FromJson(operationConfig));
                 }
             }
 

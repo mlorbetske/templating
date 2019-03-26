@@ -1,13 +1,14 @@
 using System.Collections.Generic;
+using dotnet_new3;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros.Config;
 using Microsoft.TemplateEngine.TestHelper;
-using static Microsoft.TemplateEngine.Orchestrator.RunnableProjects.RunnableProjectGenerator;
-using Newtonsoft.Json.Linq;
 using Xunit;
+using static Microsoft.TemplateEngine.Orchestrator.RunnableProjects.RunnableProjectGenerator;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.MacroTests
 {
@@ -32,8 +33,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Macro
             RandomMacro macro = new RandomMacro();
             macro.EvaluateConfig(EngineEnvironmentSettings, variables, macroConfig, parameters, setter);
 
-            ITemplateParameter valueParam;
-            Assert.True(parameters.TryGetParameterDefinition(variableName, out valueParam));
+            Assert.True(parameters.TryGetParameterDefinition(variableName, out ITemplateParameter valueParam));
             long randomValue = (long)parameters.ResolvedValues[valueParam];
             Assert.True(randomValue >= low);
 
@@ -52,11 +52,15 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Macro
         public void TestRandomDeferredConfig(int low, int? high)
         {
             string variableName = "myRnd";
-            Dictionary<string, JToken> jsonParameters = new Dictionary<string, JToken>();
-            jsonParameters.Add("low", low);
+
+            IJsonDocumentObjectModelFactory domFactory = new JsonDomFactory();
+            Dictionary<string, IJsonToken> jsonParameters = new Dictionary<string, IJsonToken>
+            {
+                { "low", domFactory.CreateValue(low) }
+            };
             if (high.HasValue)
             {
-                jsonParameters.Add("high", high);
+                jsonParameters.Add("high", domFactory.CreateValue(high.Value));
             }
 
             GeneratedSymbolDeferredMacroConfig deferredConfig = new GeneratedSymbolDeferredMacroConfig("RandomMacro", null, variableName, jsonParameters);
@@ -68,8 +72,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Macro
             RandomMacro macro = new RandomMacro();
             IMacroConfig realConfig = macro.CreateConfig(EngineEnvironmentSettings, deferredConfig);
             macro.EvaluateConfig(EngineEnvironmentSettings, variables, realConfig, parameters, setter);
-            ITemplateParameter valueParam;
-            Assert.True(parameters.TryGetParameterDefinition(variableName, out valueParam));
+
+            Assert.True(parameters.TryGetParameterDefinition(variableName, out ITemplateParameter valueParam));
             long randomValue = (long)parameters.ResolvedValues[valueParam];
             Assert.True(randomValue >= low);
 

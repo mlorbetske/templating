@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.TemplateEngine.Abstractions;
-using Newtonsoft.Json.Linq;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 {
@@ -23,16 +23,16 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 
         public string ConfigFile { get; private set; }
 
-        public static IReadOnlyList<IPostActionModel> ListFromJArray(JArray jObject, IReadOnlyDictionary<Guid, IPostActionLocalizationModel> localizations)
+        public static IReadOnlyList<IPostActionModel> ListFromJson(IJsonArray json, IReadOnlyDictionary<Guid, IPostActionLocalizationModel> localizations)
         {
             List<IPostActionModel> modelList = new List<IPostActionModel>();
 
-            if (jObject == null)
+            if (json == null)
             {
                 return modelList;
             }
 
-            foreach (JToken action in jObject)
+            foreach (IJsonToken action in json)
             {
                 Guid actionId = action.ToGuid(nameof(ActionId));
                 IPostActionLocalizationModel actionLocalizations;
@@ -43,14 +43,14 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 
                 Dictionary<string, string> args = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-                foreach (JProperty argInfo in action.PropertiesOf("Args"))
+                foreach (KeyValuePair<string, IJsonToken> argInfo in action.PropertiesOf("Args"))
                 {
-                    args.Add(argInfo.Name, argInfo.Value.ToString());
+                    args.Add(argInfo.Key, ((IJsonValue)argInfo.Value).Value.ToString());
                 }
 
                 List<KeyValuePair<string, string>> instructionOptions = new List<KeyValuePair<string, string>>();
 
-                JArray manualInstructions = action.Get<JArray>("ManualInstructions");
+                IJsonArray manualInstructions = action.Get<IJsonArray>("ManualInstructions");
                 bool useLocalizedInstructions =
                     actionLocalizations != null
                     && manualInstructions != null

@@ -2,17 +2,18 @@ using System.IO;
 using Microsoft.TemplateEngine.Abstractions;
 using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Abstractions.Mount;
+using Microsoft.TemplateEngine.Utils;
 
 namespace Microsoft.TemplateEngine.Cli
 {
     public class HostSpecificDataLoader : IHostSpecificDataLoader
     {
+        private readonly ISettingsLoader _settingsLoader;
+
         public HostSpecificDataLoader(ISettingsLoader settingsLoader)
         {
             _settingsLoader = settingsLoader;
         }
-
-        private ISettingsLoader _settingsLoader;
 
         public HostSpecificTemplateData ReadHostSpecificTemplateData(ITemplateInfo templateInfo)
         {
@@ -31,7 +32,7 @@ namespace Microsoft.TemplateEngine.Cli
                             return HostSpecificTemplateData.Default;
                         }
 
-                        return HostSpecificTemplateData.DeserializationPlan.Deserialize(root);
+                        return HostSpecificTemplateData.Default.JsonBuilder.Deserialize(root);
                     }
                 }
             }

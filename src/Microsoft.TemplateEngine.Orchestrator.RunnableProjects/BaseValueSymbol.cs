@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.ValueForms;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 {
@@ -28,23 +28,23 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 
         public IReadOnlyList<IReplacementContext> ReplacementContexts { get; set; }
 
-        protected static T FromJObject<T>(JObject jObject, IParameterSymbolLocalizationModel localization, string defaultOverride)
+        protected static T FromJson<T>(IJsonObject json, IParameterSymbolLocalizationModel localization, string defaultOverride)
             where T: BaseValueSymbol, new()
         {
             T symbol = new T
             {
-                Binding = jObject.ToString(nameof(Binding)),
-                DefaultValue = defaultOverride ?? jObject.ToString(nameof(DefaultValue)),
-                Description = localization?.Description ?? jObject.ToString(nameof(Description)) ?? string.Empty,
-                FileRename = jObject.ToString(nameof(FileRename)),
-                IsRequired = jObject.ToBool(nameof(IsRequired)),
-                Type = jObject.ToString(nameof(Type)),
-                Replaces = jObject.ToString(nameof(Replaces)),
-                DataType = jObject.ToString(nameof(DataType)),
-                ReplacementContexts = SymbolModelConverter.ReadReplacementContexts(jObject)
+                Binding = json.ToString(nameof(Binding)),
+                DefaultValue = defaultOverride ?? json.ToString(nameof(DefaultValue)),
+                Description = localization?.Description ?? json.ToString(nameof(Description)) ?? string.Empty,
+                FileRename = json.ToString(nameof(FileRename)),
+                IsRequired = json.ToBool(nameof(IsRequired)),
+                Type = json.ToString(nameof(Type)),
+                Replaces = json.ToString(nameof(Replaces)),
+                DataType = json.ToString(nameof(DataType)),
+                ReplacementContexts = SymbolModelConverter.ReadReplacementContexts(json)
             };
 
-            if (!jObject.TryGetValue(nameof(symbol.Forms), StringComparison.OrdinalIgnoreCase, out JToken formsToken) || !(formsToken is JObject formsObject))
+            if (!json.TryGetValue(nameof(symbol.Forms), StringComparison.OrdinalIgnoreCase, out IJsonToken formsToken) || !(formsToken is IJsonObject formsObject))
             {
                 // no value forms explicitly defined, use the default ("identity")
                 symbol.Forms = SymbolValueFormsModel.Default;
@@ -52,7 +52,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
             else
             {
                 // the config defines forms for the symbol. Use them.
-                symbol.Forms = SymbolValueFormsModel.FromJObject(formsObject);
+                symbol.Forms = SymbolValueFormsModel.FromJson(formsObject);
             }
 
             return symbol;

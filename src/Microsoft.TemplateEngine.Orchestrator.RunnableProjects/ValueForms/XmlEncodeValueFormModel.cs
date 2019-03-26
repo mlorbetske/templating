@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Xml;
-using Newtonsoft.Json.Linq;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.ValueForms
 {
@@ -22,7 +22,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.ValueForms
             Name = name;
         }
 
-        public IValueForm FromJObject(string name, JObject configuration)
+        public IValueForm FromJson(string name, IJsonObject configuration)
         {
             return new XmlEncodeValueFormModel(name);
         }

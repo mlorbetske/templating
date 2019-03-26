@@ -5,16 +5,15 @@ using System.Linq;
 using System.Reflection;
 using AutoFixture;
 using AutoFixture.Kernel;
+using dotnet_new3;
 using FakeItEasy;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Abstractions.Mount;
-using Microsoft.TemplateEngine.Abstractions.PhysicalFileSystem;
 using Microsoft.TemplateEngine.Edge.Mount.FileSystem;
 using Microsoft.TemplateEngine.Edge.Settings;
 using Microsoft.TemplateEngine.Mocks;
 using Microsoft.TemplateEngine.TestHelper;
-using Microsoft.TemplateEngine.Utils;
-using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace Microsoft.TemplateEngine.Edge.UnitTests
@@ -43,7 +42,7 @@ namespace Microsoft.TemplateEngine.Edge.UnitTests
                 .Returns(BaseDir);
         }
 
-        //[Fact(DisplayName = nameof(RebuildCacheIfNotCurrentScansAll))]
+        [Fact(DisplayName = nameof(RebuildCacheIfNotCurrentScansAll))]
         public void RebuildCacheIfNotCurrentScansAll()
         {
             _fixture.Customizations.Add(new MountPointInfoBuilder());
@@ -62,7 +61,7 @@ namespace Microsoft.TemplateEngine.Edge.UnitTests
         }
 
 
-        //[Fact(DisplayName = nameof(RebuildCacheIfForceRebuildScansAll))]
+        [Fact(DisplayName = nameof(RebuildCacheIfForceRebuildScansAll))]
         public void RebuildCacheIfForceRebuildScansAll()
         {
             _fixture.Customizations.Add(new MountPointInfoBuilder());
@@ -80,7 +79,7 @@ namespace Microsoft.TemplateEngine.Edge.UnitTests
             AssertMountPointsWereScanned(mountPoints);
         }
 
-        //[Fact(DisplayName = nameof(RebuildCacheFromSettingsOnlyScansOutOfDateFileSystemMountPoints))]
+        [Fact(DisplayName = nameof(RebuildCacheFromSettingsOnlyScansOutOfDateFileSystemMountPoints))]
         public void RebuildCacheFromSettingsOnlyScansOutOfDateFileSystemMountPoints()
         {
             _fixture.Customizations.Add(new MountPointInfoBuilder(FileSystemMountPointFactory.FactoryId));
@@ -132,8 +131,7 @@ namespace Microsoft.TemplateEngine.Edge.UnitTests
 
             userSettings.MountPoints.AddRange(mountPoints ?? new MountPointInfo[0]);
 
-            SettingsStoreJsonSerializer serializer = new SettingsStoreJsonSerializer();
-            if (serializer.TrySerialize(userSettings, out string serialized))
+            if (SettingsStoreJsonSerializer.TrySerialize(new JsonDomFactory(), userSettings, out string serialized))
             {
                 _fileSystem.Add(Path.Combine(BaseDir, "settings.json"), serialized.ToString());
             }
@@ -147,8 +145,8 @@ namespace Microsoft.TemplateEngine.Edge.UnitTests
         {
             TemplateCache cache = new TemplateCache(_environmentSettings, templates);
 
-            TemplateCacheJsonSerializer serializer = new TemplateCacheJsonSerializer();
-            if (serializer.TrySerialize(cache, out string serialized))
+            IJsonDocumentObjectModelFactory domFactory = new JsonDomFactory();
+            if (TemplateCacheJsonSerializer.TrySerialize(domFactory, cache, out string serialized))
             {
                 _fileSystem.Add(Path.Combine(BaseDir, "templatecache.json"), serialized.ToString());
             }

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Utils;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 {
@@ -30,14 +30,14 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
             set { }
         }
 
-        public static ISymbolModel FromJObject(JObject jObject)
+        public static ISymbolModel FromJson(IJsonObject json)
         {
             ComputedSymbol sym = new ComputedSymbol
             {
-                DataType = jObject.ToString(nameof(DataType)),
-                Value = jObject.ToString(nameof(Value)),
-                Type = jObject.ToString(nameof(Type)),
-                Evaluator = jObject.ToString(nameof(Evaluator))
+                DataType = json.ToString(nameof(DataType)),
+                Value = json.ToString(nameof(Value)),
+                Type = json.ToString(nameof(Type)),
+                Evaluator = json.ToString(nameof(Evaluator))
             };
 
             return sym;

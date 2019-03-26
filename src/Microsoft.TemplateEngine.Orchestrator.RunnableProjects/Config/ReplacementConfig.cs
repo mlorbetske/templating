@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Abstractions.Mount;
 using Microsoft.TemplateEngine.Core;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Core.Operations;
 using Microsoft.TemplateEngine.Utils;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Config
 {
@@ -30,21 +30,21 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Config
             }
         }
 
-        public IEnumerable<IOperationProvider> ConfigureFromJObject(JObject rawConfiguration, IDirectory templateRoot)
+        public IEnumerable<IOperationProvider> ConfigureFromJson(IJsonObject rawConfiguration, IDirectory templateRoot)
         {
             string original = rawConfiguration.ToString("original");
             string replacement = rawConfiguration.ToString("replacement");
             string id = rawConfiguration.ToString("id");
             bool onByDefault = rawConfiguration.ToBool("onByDefault");
 
-            JArray onlyIf = rawConfiguration.Get<JArray>("onlyIf");
+            IJsonArray onlyIf = rawConfiguration.Get<IJsonArray>("onlyIf");
             TokenConfig coreConfig = original.TokenConfigBuilder();
 
             if (onlyIf != null)
             {
-                foreach (JToken entry in onlyIf.Children())
+                foreach (IJsonToken entry in onlyIf)
                 {
-                    if (!(entry is JObject x))
+                    if (entry.TokenType != JsonTokenType.Object)
                     {
                         continue;
                     }

@@ -1,8 +1,8 @@
 using System;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros.Config;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros
 {
@@ -65,22 +65,22 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros
             int low;
             int high;
 
-            if (!deferredConfig.Parameters.TryGetValue("low", out JToken lowToken))
+            if (!deferredConfig.Parameters.TryGetValue("low", out IJsonToken lowToken))
             {
                 throw new ArgumentNullException("low");
             }
             else
             {
-                low = lowToken.Value<int>();
+                low = lowToken.ToInt32();
             }
 
-            if (!deferredConfig.Parameters.TryGetValue("high", out JToken highToken))
+            if (!deferredConfig.Parameters.TryGetValue("high", out IJsonToken highToken))
             {
                 high = int.MaxValue;
             }
             else
             {
-                high = highToken.Value<int>();
+                high = highToken.ToInt32();
             }
 
             IMacroConfig realConfig = new RandomMacroConfig(deferredConfig.VariableName, deferredConfig.DataType, low, high);

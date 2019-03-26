@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Utils;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 {
@@ -77,29 +77,23 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 
         public IReadOnlyDictionary<string, string> Choices
         {
-            get
-            {
-                return _choices;
-            }
-            set
-            {
-                _choices = value.CloneIfDifferentComparer(StringComparer.OrdinalIgnoreCase);
-            }
+            get => _choices;
+            set => _choices = value.CloneIfDifferentComparer(StringComparer.OrdinalIgnoreCase);
         }
 
-        public static ISymbolModel FromJObject(JObject jObject, IParameterSymbolLocalizationModel localization, string defaultOverride)
+        public static ISymbolModel FromJson(IJsonObject json, IParameterSymbolLocalizationModel localization, string defaultOverride)
         {
-            ParameterSymbol symbol = FromJObject<ParameterSymbol>(jObject, localization, defaultOverride);
-            symbol.DefaultIfOptionWithoutValue = jObject.ToString(nameof(DefaultIfOptionWithoutValue));
+            ParameterSymbol symbol = FromJson<ParameterSymbol>(json, localization, defaultOverride);
+            symbol.DefaultIfOptionWithoutValue = json.ToString(nameof(DefaultIfOptionWithoutValue));
 
             Dictionary<string, string> choicesAndDescriptions = new Dictionary<string, string>();
 
             if (symbol.DataType == "choice")
             {
-                symbol.IsTag = jObject.ToBool(nameof(IsTag), true);
-                symbol.TagName = jObject.ToString(nameof(TagName));
+                symbol.IsTag = json.ToBool(nameof(IsTag), true);
+                symbol.TagName = json.ToString(nameof(TagName));
 
-                foreach (JObject choiceObject in jObject.Items<JObject>(nameof(Choices)))
+                foreach (IJsonObject choiceObject in json.Items<IJsonObject>(nameof(Choices)))
                 {
                     string choice = choiceObject.ToString("choice");
 

@@ -1,15 +1,15 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Core.Operations;
 using Microsoft.TemplateEngine.Utils;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Config
 {
     public static class ConditionalLineCommentConfig
     {
-        public static List<IOperationProvider> ConfigureFromJObject(JObject rawConfiguration)
+        public static List<IOperationProvider> ConfigureFromJson(IJsonObject rawConfiguration)
         {
             string token = rawConfiguration.ToString("token");
 
@@ -18,8 +18,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Config
                 throw new TemplateAuthoringException("Template authoring error. Token must be defined", "token");
             }
 
-            ConditionalKeywords keywords = ConditionalKeywords.FromJObject(rawConfiguration);
-            ConditionalOperationOptions options = ConditionalOperationOptions.FromJObject(rawConfiguration);
+            ConditionalKeywords keywords = ConditionalKeywords.FromJson(rawConfiguration);
+            ConditionalOperationOptions options = ConditionalOperationOptions.FromJson(rawConfiguration);
 
             return GenerateConditionalSetup(token, keywords, options);
         }

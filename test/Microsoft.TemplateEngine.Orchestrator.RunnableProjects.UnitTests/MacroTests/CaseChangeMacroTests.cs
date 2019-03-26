@@ -1,13 +1,14 @@
 using System.Collections.Generic;
+using dotnet_new3;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros.Config;
-using static Microsoft.TemplateEngine.Orchestrator.RunnableProjects.RunnableProjectGenerator;
-using Newtonsoft.Json.Linq;
-using Xunit;
 using Microsoft.TemplateEngine.TestHelper;
+using Xunit;
+using static Microsoft.TemplateEngine.Orchestrator.RunnableProjects.RunnableProjectGenerator;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.MacroTests
 {
@@ -40,8 +41,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Macro
             CaseChangeMacro macro = new CaseChangeMacro();
             macro.EvaluateConfig(EngineEnvironmentSettings, variables, macroConfig, parameters, setter);
 
-            ITemplateParameter convertedParam;
-            Assert.True(parameters.TryGetParameterDefinition(variableName, out convertedParam));
+            Assert.True(parameters.TryGetParameterDefinition(variableName, out ITemplateParameter convertedParam));
             string convertedValue = (string)parameters.ResolvedValues[convertedParam];
             Assert.Equal(convertedValue, sourceValue.ToLower());
         }
@@ -73,8 +73,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Macro
             CaseChangeMacro macro = new CaseChangeMacro();
             macro.EvaluateConfig(EngineEnvironmentSettings, variables, macroConfig, parameters, setter);
 
-            ITemplateParameter convertedParam;
-            Assert.True(parameters.TryGetParameterDefinition(variableName, out convertedParam));
+            Assert.True(parameters.TryGetParameterDefinition(variableName, out ITemplateParameter convertedParam));
             string convertedValue = (string)parameters.ResolvedValues[convertedParam];
             Assert.Equal(convertedValue, sourceValue.ToUpper());
         }
@@ -84,10 +83,11 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Macro
         {
             string variableName = "myString";
 
-            Dictionary<string, JToken> jsonParameters = new Dictionary<string, JToken>();
+            IJsonDocumentObjectModelFactory domFactory = new JsonDomFactory();
+            Dictionary<string, IJsonToken> jsonParameters = new Dictionary<string, IJsonToken>();
             string sourceVariable = "sourceString";
-            jsonParameters.Add("source", sourceVariable);
-            jsonParameters.Add("toLower", false);
+            jsonParameters.Add("source", domFactory.CreateValue(sourceVariable));
+            jsonParameters.Add("toLower", domFactory.CreateValue(false));
             GeneratedSymbolDeferredMacroConfig deferredConfig = new GeneratedSymbolDeferredMacroConfig("CaseChangeMacro", null, variableName, jsonParameters);
 
             CaseChangeMacro macro = new CaseChangeMacro();
@@ -108,8 +108,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Macro
 
             IMacroConfig realConfig = macro.CreateConfig(EngineEnvironmentSettings, deferredConfig);
             macro.EvaluateConfig(EngineEnvironmentSettings, variables, realConfig, parameters, setter);
-            ITemplateParameter convertedParam;
-            Assert.True(parameters.TryGetParameterDefinition(variableName, out convertedParam));
+
+            Assert.True(parameters.TryGetParameterDefinition(variableName, out ITemplateParameter convertedParam));
             string convertedValue = (string)parameters.ResolvedValues[convertedParam];
             Assert.Equal(convertedValue, sourceValue.ToUpper());
         }

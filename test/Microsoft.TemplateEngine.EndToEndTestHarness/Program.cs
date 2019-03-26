@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
+using dotnet_new3;
 using Microsoft.TemplateEngine.Abstractions;
 using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Abstractions.PhysicalFileSystem;
@@ -12,7 +13,6 @@ using Microsoft.TemplateEngine.Edge;
 using Microsoft.TemplateEngine.Edge.TemplateUpdates;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects;
 using Microsoft.TemplateEngine.Utils;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.EndToEndTestHarness
 {
@@ -21,7 +21,7 @@ namespace Microsoft.TemplateEngine.EndToEndTestHarness
         private const string HostIdentifier = "endtoendtestharness";
         private const string HostVersion = "1.0.0";
         private const string CommandName = "test-test";
-        private static readonly Dictionary<string, Func<IPhysicalFileSystem, JObject, string, bool>> VerificationLookup = new Dictionary<string, Func<IPhysicalFileSystem, JObject, string, bool>>(StringComparer.OrdinalIgnoreCase);
+        private static readonly Dictionary<string, Func<IPhysicalFileSystem, IJsonObject, string, bool>> VerificationLookup = new Dictionary<string, Func<IPhysicalFileSystem, IJsonObject, string, bool>>(StringComparer.OrdinalIgnoreCase);
 
         static int Main(string[] args)
         {
@@ -65,12 +65,14 @@ namespace Microsoft.TemplateEngine.EndToEndTestHarness
 
             int result = New3Command.Run(CommandName, host, new TelemetryLogger(null), FirstRun, jsonDomFactory, passthroughArgs, hivePath);
             bool verificationsPassed = false;
+            IJsonDocumentObjectModelFactory domFactory = new JsonDomFactory();
 
             for (int i = 0; i < batteryCount; ++i)
             {
                 string verificationsFile = args[i + 1];
                 string verificationsFileContents = File.ReadAllText(verificationsFile);
-                JArray verifications = JArray.Parse(verificationsFileContents);
+                domFactory.TryParse(verificationsFile, out IJsonToken token);
+                IJsonArray verifications = token as IJsonArray;
 
                 try
                 {
@@ -93,7 +95,7 @@ namespace Microsoft.TemplateEngine.EndToEndTestHarness
             return result != 0 ? result : verificationsPassed ? 0 : 1;
         }
 
-        private static bool CheckFileDoesNotContain(IPhysicalFileSystem fs, JObject config, string outputPath)
+        private static bool CheckFileDoesNotContain(IPhysicalFileSystem fs, IJsonObject config, string outputPath)
         {
             string path = Path.Combine(outputPath, config["path"].ToString());
             string text = fs.ReadAllText(path);
@@ -106,7 +108,7 @@ namespace Microsoft.TemplateEngine.EndToEndTestHarness
             return false;
         }
 
-        private static bool CheckFileContains(IPhysicalFileSystem fs, JObject config, string outputPath)
+        private static bool CheckFileContains(IPhysicalFileSystem fs, IJsonObject config, string outputPath)
         {
             string path = Path.Combine(outputPath, config["path"].ToString());
             string text = fs.ReadAllText(path);
@@ -121,7 +123,7 @@ namespace Microsoft.TemplateEngine.EndToEndTestHarness
             return false;
         }
 
-        private static bool CheckFileExists(IPhysicalFileSystem fs, JObject config, string outputPath)
+        private static bool CheckFileExists(IPhysicalFileSystem fs, IJsonObject config, string outputPath)
         {
             string path = Path.Combine(outputPath, config["path"].ToString());
             if(fs.FileExists(path))
@@ -133,7 +135,7 @@ namespace Microsoft.TemplateEngine.EndToEndTestHarness
             return false;
         }
 
-        private static bool CheckDirectoryExists(IPhysicalFileSystem fs, JObject config, string outputPath)
+        private static bool CheckDirectoryExists(IPhysicalFileSystem fs, IJsonObject config, string outputPath)
         {
             string path = Path.Combine(outputPath, config["path"].ToString());
             if (fs.DirectoryExists(path))
@@ -145,7 +147,7 @@ namespace Microsoft.TemplateEngine.EndToEndTestHarness
             return false;
         }
 
-        private static bool CheckFileDoesNotExist(IPhysicalFileSystem fs, JObject config, string outputPath)
+        private static bool CheckFileDoesNotExist(IPhysicalFileSystem fs, IJsonObject config, string outputPath)
         {
             string path = Path.Combine(outputPath, config["path"].ToString());
             if (!fs.FileExists(path))
@@ -157,7 +159,7 @@ namespace Microsoft.TemplateEngine.EndToEndTestHarness
             return false;
         }
 
-        private static bool CheckDirectoryDoesNotExist(IPhysicalFileSystem fs, JObject config, string outputPath)
+        private static bool CheckDirectoryDoesNotExist(IPhysicalFileSystem fs, IJsonObject config, string outputPath)
         {
             string path = Path.Combine(outputPath, config["path"].ToString());
             if (!fs.DirectoryExists(path))
@@ -169,13 +171,13 @@ namespace Microsoft.TemplateEngine.EndToEndTestHarness
             return false;
         }
 
-        private static bool RunVerifications(JArray verifications, IPhysicalFileSystem fs, string outputPath)
+        private static bool RunVerifications(IJsonArray verifications, IPhysicalFileSystem fs, string outputPath)
         {
             bool success = true;
-            foreach(JObject verification in verifications)
+            foreach(IJsonObject verification in verifications)
             {
                 string kind = verification["kind"].ToString();
-                if (!VerificationLookup.TryGetValue(kind, out Func<IPhysicalFileSystem, JObject, string, bool> func))
+                if (!VerificationLookup.TryGetValue(kind, out Func<IPhysicalFileSystem, IJsonObject, string, bool> func))
                 {
                     Console.Error.WriteLine($"Unable to find a verification handler for {kind}");
                     return false;

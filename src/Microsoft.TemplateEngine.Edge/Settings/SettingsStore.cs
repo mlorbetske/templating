@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Abstractions.Mount;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Edge.Settings
 {
@@ -20,55 +19,53 @@ namespace Microsoft.TemplateEngine.Edge.Settings
             Version = string.Empty;
         }
 
-        public SettingsStore(JObject obj)
+        public SettingsStore(IJsonObject obj)
             : this()
         {
-            JToken versionToken;
-            if (obj.TryGetValue(nameof(Version), StringComparison.OrdinalIgnoreCase, out versionToken))
+            if (obj.TryGetValue(nameof(Version), StringComparison.OrdinalIgnoreCase, out IJsonToken versionToken))
             {
-                Version = versionToken.ToString();
+                Version = versionToken.GetJsonString();
             }
 
-            JToken mountPointsToken;
-            if (obj.TryGetValue("MountPoints", StringComparison.OrdinalIgnoreCase, out mountPointsToken))
+            if (obj.TryGetValue("MountPoints", StringComparison.OrdinalIgnoreCase, out IJsonToken mountPointsToken))
             {
-                JArray mountPointsArray = mountPointsToken as JArray;
+                IJsonArray mountPointsArray = mountPointsToken as IJsonArray;
                 if (mountPointsArray != null)
                 {
-                    foreach (JToken entry in mountPointsArray)
+                    foreach (IJsonToken entry in mountPointsArray)
                     {
-                        if (entry != null && entry.Type == JTokenType.Object)
+                        if (entry != null && entry.TokenType == JsonTokenType.Object)
                         {
                             Guid parentMountPointId;
                             Guid mountPointFactoryId;
                             Guid mountPointId;
 
-                            JObject mp = (JObject) entry;
-                            JToken parentMountPointIdToken;
-                            if (!mp.TryGetValue("ParentMountPointId", StringComparison.OrdinalIgnoreCase, out parentMountPointIdToken) || parentMountPointIdToken == null || parentMountPointIdToken.Type != JTokenType.String || !Guid.TryParse(parentMountPointIdToken.ToString(), out parentMountPointId))
+                            IJsonObject mp = (IJsonObject) entry;
+                            IJsonToken parentMountPointIdToken;
+                            if (!mp.TryGetValue("ParentMountPointId", StringComparison.OrdinalIgnoreCase, out parentMountPointIdToken) || parentMountPointIdToken == null || parentMountPointIdToken.TokenType != JsonTokenType.String || !Guid.TryParse(((IJsonValue)parentMountPointIdToken).Value.ToString(), out parentMountPointId))
                             {
                                 continue;
                             }
 
-                            JToken mountPointFactoryIdToken;
-                            if (!mp.TryGetValue("MountPointFactoryId", StringComparison.OrdinalIgnoreCase, out mountPointFactoryIdToken) || mountPointFactoryIdToken == null || mountPointFactoryIdToken.Type != JTokenType.String || !Guid.TryParse(mountPointFactoryIdToken.ToString(), out mountPointFactoryId))
+                            IJsonToken mountPointFactoryIdToken;
+                            if (!mp.TryGetValue("MountPointFactoryId", StringComparison.OrdinalIgnoreCase, out mountPointFactoryIdToken) || mountPointFactoryIdToken == null || mountPointFactoryIdToken.TokenType != JsonTokenType.String || !Guid.TryParse(((IJsonValue)mountPointFactoryIdToken).Value.ToString(), out mountPointFactoryId))
                             {
                                 continue;
                             }
 
-                            JToken mountPointIdToken;
-                            if (!mp.TryGetValue("MountPointId", StringComparison.OrdinalIgnoreCase, out mountPointIdToken) || mountPointIdToken == null || mountPointIdToken.Type != JTokenType.String || !Guid.TryParse(mountPointIdToken.ToString(), out mountPointId))
+                            IJsonToken mountPointIdToken;
+                            if (!mp.TryGetValue("MountPointId", StringComparison.OrdinalIgnoreCase, out mountPointIdToken) || mountPointIdToken == null || mountPointIdToken.TokenType != JsonTokenType.String || !Guid.TryParse(((IJsonValue)mountPointIdToken).Value.ToString(), out mountPointId))
                             {
                                 continue;
                             }
 
-                            JToken placeToken;
-                            if (!mp.TryGetValue("Place", StringComparison.OrdinalIgnoreCase, out placeToken) || placeToken == null || placeToken.Type != JTokenType.String)
+                            IJsonToken placeToken;
+                            if (!mp.TryGetValue("Place", StringComparison.OrdinalIgnoreCase, out placeToken) || placeToken == null || placeToken.TokenType != JsonTokenType.String)
                             {
                                 continue;
                             }
 
-                            string place = placeToken.ToString();
+                            string place = ((IJsonValue)placeToken).Value.ToString();
                             MountPointInfo mountPoint = new MountPointInfo(parentMountPointId, mountPointFactoryId, mountPointId, place);
                             MountPoints.Add(mountPoint);
                         }
@@ -76,59 +73,56 @@ namespace Microsoft.TemplateEngine.Edge.Settings
                 }
             }
 
-            JToken componentGuidToAssemblyQualifiedNameToken;
-            if (obj.TryGetValue("ComponentGuidToAssemblyQualifiedName", StringComparison.OrdinalIgnoreCase, out componentGuidToAssemblyQualifiedNameToken))
+            if (obj.TryGetValue("ComponentGuidToAssemblyQualifiedName", StringComparison.OrdinalIgnoreCase, out IJsonToken componentGuidToAssemblyQualifiedNameToken))
             {
-                JObject componentGuidToAssemblyQualifiedNameObject = componentGuidToAssemblyQualifiedNameToken as JObject;
+                IJsonObject componentGuidToAssemblyQualifiedNameObject = componentGuidToAssemblyQualifiedNameToken as IJsonObject;
                 if (componentGuidToAssemblyQualifiedNameObject != null)
                 {
-                    foreach (JProperty entry in componentGuidToAssemblyQualifiedNameObject.Properties())
+                    foreach (KeyValuePair<string, IJsonToken> entry in componentGuidToAssemblyQualifiedNameObject.Properties())
                     {
-                        if (entry.Value != null && entry.Value.Type == JTokenType.String)
+                        if (entry.Value != null && entry.Value.TokenType == JsonTokenType.String)
                         {
-                            ComponentGuidToAssemblyQualifiedName[entry.Name] = entry.Value.ToString();
+                            ComponentGuidToAssemblyQualifiedName[entry.Key] = ((IJsonValue)entry.Value).Value.ToString();
                         }
                     }
                 }
             }
 
-            JToken probingPathsToken;
-            if (obj.TryGetValue("ProbingPaths", StringComparison.OrdinalIgnoreCase, out probingPathsToken))
+            if (obj.TryGetValue("ProbingPaths", StringComparison.OrdinalIgnoreCase, out IJsonToken probingPathsToken))
             {
-                JArray probingPathsArray = probingPathsToken as JArray;
+                IJsonArray probingPathsArray = probingPathsToken as IJsonArray;
                 if (probingPathsArray != null)
                 {
-                    foreach (JToken path in probingPathsArray)
+                    foreach (IJsonToken path in probingPathsArray)
                     {
-                        if (path != null && path.Type == JTokenType.String)
+                        if (path != null && path.TokenType == JsonTokenType.String)
                         {
-                            ProbingPaths.Add(path.ToString());
+                            ProbingPaths.Add(((IJsonValue)path).Value.ToString());
                         }
                     }
                 }
             }
 
-            JToken componentTypeToGuidListToken;
-            if (obj.TryGetValue("ComponentTypeToGuidList", StringComparison.OrdinalIgnoreCase, out componentTypeToGuidListToken))
+            if (obj.TryGetValue("ComponentTypeToGuidList", StringComparison.OrdinalIgnoreCase, out IJsonToken componentTypeToGuidListToken))
             {
-                JObject componentTypeToGuidListObject = componentTypeToGuidListToken as JObject;
+                IJsonObject componentTypeToGuidListObject = componentTypeToGuidListToken as IJsonObject;
                 if (componentTypeToGuidListObject != null)
                 {
-                    foreach (JProperty entry in componentTypeToGuidListObject.Properties())
+                    foreach (KeyValuePair<string, IJsonToken> entry in componentTypeToGuidListObject.Properties())
                     {
-                        JArray values = entry.Value as JArray;
+                        IJsonArray values = entry.Value as IJsonArray;
 
                         if (values != null)
                         {
                             HashSet<Guid> set = new HashSet<Guid>();
-                            ComponentTypeToGuidList[entry.Name] = set;
+                            ComponentTypeToGuidList[entry.Key] = set;
 
-                            foreach (JToken value in values)
+                            foreach (IJsonToken value in values)
                             {
-                                if (value != null && value.Type == JTokenType.String)
+                                if (value != null && value.TokenType == JsonTokenType.String)
                                 {
                                     Guid id;
-                                    if (Guid.TryParse(value.ToString(), out id))
+                                    if (Guid.TryParse(((IJsonValue)value).Value.ToString(), out id))
                                     {
                                         set.Add(id);
                                     }

@@ -1,4 +1,4 @@
-﻿<Project ToolsVersion="15.0" Sdk="Microsoft.NET.Sdk">
+<Project ToolsVersion="15.0" Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <TargetFrameworks Condition="'$(PackSpecific)' != 'true'">netstandard2.0;net452</TargetFrameworks>
         <TargetFrameworks Condition="'$(PackSpecific)' == 'true'">netstandard2.0</TargetFrameworks>
@@ -12,6 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Newtonsoft.Json" Condition="'$(TargetFramework)' != 'netcoreapp3.0'" />
         <ProjectReference Include="$(SrcDir)Microsoft.TemplateEngine.Abstractions\Microsoft.TemplateEngine.Abstractions.csproj" />
         <ProjectReference Include="$(SrcDir)Microsoft.TemplateEngine.Core.Contracts\Microsoft.TemplateEngine.Core.Contracts.csproj" />
         <ProjectReference Include="$(SrcDir)Microsoft.TemplateEngine.Edge\Microsoft.TemplateEngine.Edge.csproj" />

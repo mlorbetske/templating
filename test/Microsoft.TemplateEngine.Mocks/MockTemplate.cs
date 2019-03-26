@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Mocks
 {
@@ -78,5 +79,7 @@ namespace Microsoft.TemplateEngine.Mocks
         public bool HasScriptRunningPostActions { get; set; }
 
         public DateTime? ConfigTimestampUtc { get; set; }
+
+        public IJsonBuilder<ITemplateInfo> JsonBuilder => throw new NotImplementedException();
     }
 }

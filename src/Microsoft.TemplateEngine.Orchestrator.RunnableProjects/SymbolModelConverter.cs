@@ -1,7 +1,8 @@
+using System;
 using System.Collections.Generic;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Utils;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 {
@@ -9,36 +10,71 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
     {
         internal const string BindSymbolTypeName = "bind";
 
+        private static readonly IReadOnlyDictionary<string, Action<IJsonToken, TypeContainer>> ExtractTypeHandler = new Dictionary<string, Action<IJsonToken, TypeContainer>>(StringComparer.Ordinal)
+        { { "type", (token, container) => container.Type = ((IJsonValue)token).Value?.ToString() } };
+
         // Note: Only ParameterSymbol has a Description property, this it's the only one that gets localization
         // TODO: change how localization gets merged in, don't do it here.
-        public static ISymbolModel GetModelForObject(JObject jObject, IParameterSymbolLocalizationModel localization, string defaultOverride)
+        public static ISymbolModel GetModelForObject(IJsonObject json, IParameterSymbolLocalizationModel localization, string defaultOverride)
         {
-            switch (jObject.ToString(nameof(ISymbolModel.Type)))
+            switch (json.ToString(nameof(ISymbolModel.Type)))
             {
                 case ParameterSymbol.TypeName:
-                    return ParameterSymbol.FromJObject(jObject, localization, defaultOverride);
+                    return ParameterSymbol.FromJson(json, localization, defaultOverride);
                 case DerivedSymbol.TypeName:
-                    return DerivedSymbol.FromJObject(jObject, localization, defaultOverride);
+                    return DerivedSymbol.FromJson(json, localization, defaultOverride);
                 case ComputedSymbol.TypeName:
-                    return ComputedSymbol.FromJObject(jObject);
+                    return ComputedSymbol.FromJson(json);
                 case BindSymbolTypeName:
                 case GeneratedSymbol.TypeName:
-                    return GeneratedSymbol.FromJObject(jObject);
+                    return GeneratedSymbol.FromJson(json);
                 default:
                     return null;
             }
         }
 
-        internal static IReadOnlyList<IReplacementContext> ReadReplacementContexts(JObject jObject)
+        public static ISymbolModel Deserialize(IJsonToken token)
         {
-            JArray onlyIf = jObject.Get<JArray>("onlyIf");
+            if (token.TokenType != JsonTokenType.Object)
+            {
+                return null;
+            }
+
+            IJsonObject json = (IJsonObject)token;
+            TypeContainer container = new TypeContainer();
+            json.ExtractValues(container, ExtractTypeHandler);
+
+            switch (container.Type)
+            {
+                case ParameterSymbol.TypeName:
+                    return ParameterSymbol.Deserialize(json);
+                case DerivedSymbol.TypeName:
+                    return DerivedSymbol.Deserialize(json);
+                case ComputedSymbol.TypeName:
+                    return ComputedSymbol.Deserialize(json);
+                case BindSymbolTypeName:
+                case GeneratedSymbol.TypeName:
+                    return GeneratedSymbol.Deserialize(json);
+                default:
+                    return null;
+            }
+        }
+
+        private class TypeContainer
+        {
+            public string Type { get; set; }
+        }
+
+        internal static IReadOnlyList<IReplacementContext> ReadReplacementContexts(IJsonObject json)
+        {
+            IJsonArray onlyIf = json.Get<IJsonArray>("onlyIf");
 
             if (onlyIf != null)
             {
                 List<IReplacementContext> contexts = new List<IReplacementContext>();
-                foreach (JToken entry in onlyIf.Children())
+                foreach (IJsonToken entry in onlyIf)
                 {
-                    if (!(entry is JObject x))
+                    if (entry.TokenType != JsonTokenType.Object)
                     {
                         continue;
                     }

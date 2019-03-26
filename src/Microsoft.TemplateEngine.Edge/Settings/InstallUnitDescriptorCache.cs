@@ -5,8 +5,7 @@ using Microsoft.TemplateEngine.Abstractions;
 using Microsoft.TemplateEngine.Abstractions.TemplateUpdates;
 using Microsoft.TemplateEngine.Edge.TemplateUpdates;
 using Microsoft.TemplateEngine.Abstractions.Mount;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Edge.Settings
 {
@@ -138,13 +137,13 @@ namespace Microsoft.TemplateEngine.Edge.Settings
             _cache.Remove(descriptor.Identifier);
         }
 
-        public static InstallUnitDescriptorCache FromJObject(IEngineEnvironmentSettings environmentSettings, JObject cacheObj)
+        public static InstallUnitDescriptorCache FromJson(IEngineEnvironmentSettings environmentSettings, IJsonObject cacheObj)
         {
             List<IInstallUnitDescriptor> allDescriptors = new List<IInstallUnitDescriptor>();
 
-            foreach (JProperty prop in cacheObj.PropertiesOf(nameof(Descriptors)))
+            foreach (KeyValuePair<string, IJsonToken> prop in cacheObj.PropertiesOf(nameof(Descriptors)))
             {
-                JObject descriptorObj = prop.Value as JObject;
+                IJsonObject descriptorObj = prop.Value as IJsonObject;
 
                 if (InstallUnitDescriptorFactory.TryParse(environmentSettings, descriptorObj, out IInstallUnitDescriptor parsedDescriptor))
                 {

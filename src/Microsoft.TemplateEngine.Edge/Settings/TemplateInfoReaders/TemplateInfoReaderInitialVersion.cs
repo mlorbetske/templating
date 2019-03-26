@@ -1,27 +1,27 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Utils;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Edge.Settings.TemplateInfoReaders
 {
     public static class TemplateInfoReaderInitialVersion
     {
-        public static TemplateInfo FromJObject(JObject entry)
+        public static TemplateInfo FromJson(IJsonObject entry)
         {
             TemplateInfo info = new TemplateInfo();
 
             info.ConfigMountPointId = Guid.Parse(entry.ToString(nameof(TemplateInfo.ConfigMountPointId)));
             info.Author = entry.ToString(nameof(TemplateInfo.Author));
-            JArray classificationsArray = entry.Get<JArray>(nameof(TemplateInfo.Classifications));
+            IJsonArray classificationsArray = entry.Get<IJsonArray>(nameof(TemplateInfo.Classifications));
 
             List<string> classifications = new List<string>();
             info.Classifications = classifications;
             //using (Timing.Over("Read classifications"))
-            foreach (JToken item in classificationsArray)
+            foreach (IJsonToken item in classificationsArray)
             {
-                classifications.Add(item.ToString());
+                classifications.Add(((IJsonValue)item).Value.ToString());
             }
 
             info.DefaultName = entry.ToString(nameof(TemplateInfo.DefaultName));
@@ -34,19 +34,19 @@ namespace Microsoft.TemplateEngine.Edge.Settings.TemplateInfoReaders
 
             // tags are just "name": "description"
             // e.g.: "language": "C#"
-            JObject tagsObject = entry.Get<JObject>(nameof(TemplateInfo.Tags));
+            IJsonObject tagsObject = entry.Get<IJsonObject>(nameof(TemplateInfo.Tags));
             Dictionary<string, ICacheTag> tags = new Dictionary<string, ICacheTag>();
             info.Tags = tags;
-            foreach (JProperty item in tagsObject.Properties())
+            foreach (KeyValuePair<string, IJsonToken> item in tagsObject.Properties())
             {
                 Dictionary<string, string> choicesAndDescriptions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                choicesAndDescriptions.Add(item.Value.ToString(), string.Empty);
+                choicesAndDescriptions.Add(((IJsonValue)item.Value).Value.ToString(), string.Empty);
                 ICacheTag cacheTag = new CacheTag(
                     string.Empty,       // description
                     choicesAndDescriptions,
-                    item.Value.ToString());
+                    ((IJsonValue)item.Value).Value.ToString());
 
-                tags.Add(item.Name.ToString(), cacheTag);
+                tags.Add(item.Key, cacheTag);
             }
 
             info.ConfigPlace = entry.ToString(nameof(TemplateInfo.ConfigPlace));

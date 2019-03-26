@@ -1,7 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json.Linq;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.ValueForms
 {
@@ -25,7 +24,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.ValueForms
 
         public string Name => Identifier;
 
-        public virtual IValueForm FromJObject(string name, JObject configuration)
+        public virtual IValueForm FromJson(string name, IJsonObject configuration)
         {
             return new DefaultSafeNamespaceValueFormModel(name);
         }

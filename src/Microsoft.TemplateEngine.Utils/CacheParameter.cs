@@ -1,4 +1,6 @@
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
+using Microsoft.TemplateEngine.Utils.Json;
 
 namespace Microsoft.TemplateEngine.Utils
 {
@@ -12,9 +14,10 @@ namespace Microsoft.TemplateEngine.Utils
 
         public string DefaultIfOptionWithoutValue { get; set; }
 
-        public bool ShouldSerializeDefaultIfOptionWithoutValue()
-        {
-            return !string.IsNullOrEmpty(DefaultIfOptionWithoutValue);
-        }
+        public IJsonBuilder<ICacheParameter> JsonBuilder { get; } = new JsonBuilder<ICacheParameter, CacheParameter>(() => new CacheParameter())
+            .Map(p => p.DataType)
+            .Map(p => p.DefaultValue)
+            .Map(p => p.Description)
+            .Map(p => p.DefaultIfOptionWithoutValue);
     }
 }

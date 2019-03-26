@@ -1,12 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Microsoft.TemplateEngine.Abstractions;
+using dotnet_new3;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Abstractions.Mount;
 using Microsoft.TemplateEngine.TestHelper;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.TemplateConfigTests
@@ -21,16 +18,18 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
         public void CheckTemplateRootRelativeToInstallPath(string pathToTemplateJson, bool shouldAllPathsBeValid)
         {
             string sourcePath = FileSystemHelpers.GetNewVirtualizedPath(EngineEnvironmentSettings);
-            IDictionary<string, string> templateSourceFiles = new Dictionary<string, string>();
-            templateSourceFiles.Add(pathToTemplateJson, BasicTemplateConfig);
+            IDictionary<string, string> templateSourceFiles = new Dictionary<string, string>
+            {
+                { pathToTemplateJson, BasicTemplateConfig }
+            };
             TestTemplateSetup setup = new TestTemplateSetup(EngineEnvironmentSettings, sourcePath, templateSourceFiles);
             setup.WriteSource();
 
             RunnableProjectGenerator generator = new RunnableProjectGenerator();
 
             IFile templateFile = setup.FileInfoForSourceFile(pathToTemplateJson);
-            JObject srcObject = generator.ReadJObjectFromIFile(templateFile);
-            SimpleConfigModel templateModel = SimpleConfigModel.FromJObject(templateFile.MountPoint.EnvironmentSettings, srcObject);
+            IJsonObject srcObject = generator.ReadJsonObjectFromIFile(new JsonDomFactory(), templateFile);
+            SimpleConfigModel templateModel = SimpleConfigModel.FromJson(templateFile.MountPoint.EnvironmentSettings, srcObject);
             RunnableProjectTemplate runnableProjectTemplate = new RunnableProjectTemplate(srcObject, generator, templateFile, templateModel, null, null);
 
             bool allPathsAreValid = generator.AreAllTemplatePathsValid(templateModel, runnableProjectTemplate);
@@ -59,8 +58,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             RunnableProjectGenerator generator = new RunnableProjectGenerator();
 
             IFile templateFile = setup.FileInfoForSourceFile(pathToTemplateConfig);
-            JObject srcObject = generator.ReadJObjectFromIFile(templateFile);
-            SimpleConfigModel templateModel = SimpleConfigModel.FromJObject(templateFile.MountPoint.EnvironmentSettings, srcObject);
+            IJsonObject srcObject = generator.ReadJsonObjectFromIFile(new JsonDomFactory(), templateFile);
+            SimpleConfigModel templateModel = SimpleConfigModel.FromJson(templateFile.MountPoint.EnvironmentSettings, srcObject);
             RunnableProjectTemplate runnableProjectTemplate = new RunnableProjectTemplate(srcObject, generator, templateFile, templateModel, null, null);
 
             bool allPathsAreValid = generator.AreAllTemplatePathsValid(templateModel, runnableProjectTemplate);
@@ -103,8 +102,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             RunnableProjectGenerator generator = new RunnableProjectGenerator();
 
             IFile templateFile = setup.FileInfoForSourceFile(pathToTemplateConfig);
-            JObject srcObject = generator.ReadJObjectFromIFile(templateFile);
-            SimpleConfigModel templateModel = SimpleConfigModel.FromJObject(templateFile.MountPoint.EnvironmentSettings, srcObject);
+            IJsonObject srcObject = generator.ReadJsonObjectFromIFile(new JsonDomFactory(), templateFile);
+            SimpleConfigModel templateModel = SimpleConfigModel.FromJson(templateFile.MountPoint.EnvironmentSettings, srcObject);
             RunnableProjectTemplate runnableProjectTemplate = new RunnableProjectTemplate(srcObject, generator, templateFile, templateModel, null, null);
 
             bool allPathsAreValid = generator.AreAllTemplatePathsValid(templateModel, runnableProjectTemplate);

@@ -1,13 +1,14 @@
 using System.Collections.Generic;
+using dotnet_new3;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros.Config;
 using Microsoft.TemplateEngine.TestHelper;
-using static Microsoft.TemplateEngine.Orchestrator.RunnableProjects.RunnableProjectGenerator;
-using Newtonsoft.Json.Linq;
 using Xunit;
+using static Microsoft.TemplateEngine.Orchestrator.RunnableProjects.RunnableProjectGenerator;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.MacroTests
 {
@@ -20,11 +21,13 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Macro
             string evaluator = "C++";
             string dataType = "string";
             string expectedValue = "this one";
-            IList<KeyValuePair<string, string>> switches = new List<KeyValuePair<string, string>>();
-            switches.Add(new KeyValuePair<string, string>("(3 > 10)", "three greater than ten - false"));
-            switches.Add(new KeyValuePair<string, string>("(false)", "false value"));
-            switches.Add(new KeyValuePair<string, string>("(10 > 0)", expectedValue));
-            switches.Add(new KeyValuePair<string, string>("(5 > 4)", "not this one"));
+            IList<KeyValuePair<string, string>> switches = new List<KeyValuePair<string, string>>
+            {
+                new KeyValuePair<string, string>("(3 > 10)", "three greater than ten - false"),
+                new KeyValuePair<string, string>("(false)", "false value"),
+                new KeyValuePair<string, string>("(10 > 0)", expectedValue),
+                new KeyValuePair<string, string>("(5 > 4)", "not this one")
+            };
             SwitchMacroConfig macroConfig = new SwitchMacroConfig(variableName, evaluator, dataType, switches);
 
             IVariableCollection variables = new VariableCollection();
@@ -34,8 +37,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Macro
 
             SwitchMacro macro = new SwitchMacro();
             macro.EvaluateConfig(EngineEnvironmentSettings, variables, macroConfig, parameters, setter);
-            ITemplateParameter resultParam;
-            Assert.True(parameters.TryGetParameterDefinition(variableName, out resultParam));
+
+            Assert.True(parameters.TryGetParameterDefinition(variableName, out ITemplateParameter resultParam));
             string resultValue = (string)parameters.ResolvedValues[resultParam];
             Assert.Equal(resultValue, expectedValue);
         }
@@ -66,10 +69,15 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Macro
                 }
             ]";
 
-            Dictionary<string, JToken> jsonParameters = new Dictionary<string, JToken>();
-            jsonParameters.Add("evaluator", evaluator);
-            jsonParameters.Add("datatype", dataType);
-            jsonParameters.Add("cases", JArray.Parse(switchCases));
+            IJsonDocumentObjectModelFactory domFactory = new JsonDomFactory();
+            Dictionary<string, IJsonToken> jsonParameters = new Dictionary<string, IJsonToken>
+            {
+                { "evaluator", domFactory.CreateValue(evaluator) },
+                { "datatype", domFactory.CreateValue(dataType) }
+            };
+
+            domFactory.TryParse(switchCases, out IJsonToken casesToken);
+            jsonParameters.Add("cases", casesToken);
 
             GeneratedSymbolDeferredMacroConfig deferredConfig = new GeneratedSymbolDeferredMacroConfig("SwitchMacro", null, variableName, jsonParameters);
 
@@ -81,8 +89,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Macro
             SwitchMacro macro = new SwitchMacro();
             IMacroConfig realConfig = macro.CreateConfig(EngineEnvironmentSettings, deferredConfig);
             macro.EvaluateConfig(EngineEnvironmentSettings, variables, realConfig, parameters, setter);
-            ITemplateParameter resultParam;
-            Assert.True(parameters.TryGetParameterDefinition(variableName, out resultParam));
+
+            Assert.True(parameters.TryGetParameterDefinition(variableName, out ITemplateParameter resultParam));
             string resultValue = (string)parameters.ResolvedValues[resultParam];
             Assert.Equal(resultValue, expectedValue);
         }

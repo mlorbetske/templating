@@ -1,16 +1,14 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Abstractions.Mount;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 {
     public class RunnableProjectTemplate : ITemplate, IShortNameList, ITemplateWithTimestamp
     {
-        private readonly JObject _raw;
-
-        public RunnableProjectTemplate(JObject raw, IGenerator generator, IFile configFile, IRunnableProjectConfig config, IFile localeConfigFile, IFile hostConfigFile)
+        public RunnableProjectTemplate(IJsonObject raw, IGenerator generator, IFile configFile, IRunnableProjectConfig config, IFile localeConfigFile, IFile hostConfigFile)
         {
             config.SourceFile = configFile;
             ConfigFile = configFile;
@@ -35,7 +33,6 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
             HostConfigMountPointId = hostConfigFile?.MountPoint?.Info?.MountPointId ?? Guid.Empty;
             HostConfigPlace = hostConfigFile?.FullPath;
             ThirdPartyNotices = raw.ToString("thirdPartyNotices");
-            _raw = raw;
             BaselineInfo = config.BaselineInfo;
             HasScriptRunningPostActions = config.HasScriptRunningPostActions;
             if (config is ITemplateWithTimestamp withTimestamp)
@@ -218,5 +215,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
         public bool HasScriptRunningPostActions { get; set; }
 
         public DateTime? ConfigTimestampUtc { get; set; }
+
+        public IJsonBuilder<ITemplateInfo> JsonBuilder => throw new NotImplementedException("RunnableProjectTemplate is not expected to be read directly from JSON");
     }
 }

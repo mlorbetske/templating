@@ -1,11 +1,8 @@
+using dotnet_new3;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros.Config;
 using Microsoft.TemplateEngine.TestHelper;
-using Microsoft.TemplateEngine.Utils;
-using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Xunit;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.ValueFormTests
@@ -30,8 +27,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Value
   }
 }
 ";
-            JObject configObj = JObject.Parse(templateJson);
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, configObj);
+            new JsonDomFactory().TryParse(templateJson, out IJsonToken token);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, (IJsonObject)token);
             IGlobalRunConfig runConfig = null;
 
             try
@@ -72,8 +69,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Value
   }
 }
 ";
-            JObject configObj = JObject.Parse(templateJson);
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, configObj);
+            new JsonDomFactory().TryParse(templateJson, out IJsonToken token);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, (IJsonObject)token);
             IGlobalRunConfig runConfig = null;
 
             try

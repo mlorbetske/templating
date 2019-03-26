@@ -3,90 +3,25 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using Microsoft.TemplateEngine.Utils;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Utils.Json;
-using Newtonsoft.Json;
 
 namespace Microsoft.TemplateEngine.Cli
 {
-    public class HostSpecificTemplateData
+    public class HostSpecificTemplateData : IJsonSerializable<HostSpecificTemplateData>
     {
+        private const string AlwaysShowKey = "alwaysShow";
         private const string IsHiddenKey = "isHidden";
         private const string LongNameKey = "longName";
         private const string ShortNameKey = "shortName";
-        private const string AlwaysShowKey = "alwaysShow";
-        private const string UsageExamplesKey = "usageExamples";
-        private const string ValueKey = "Value";
-        private const string SymbolInfoKey = "symbolInfo";
-        private const string SymbolInfoEntryKey = "symbolInfoEntry";
-
-        internal static readonly DeserializationPlan<HostSpecificTemplateData> DeserializationPlan = Deserializer.CreateDeserializerBuilder()
-            .IfObject()
-                .Property(UsageExamplesKey)
-                    .IfArray(UsageExamplesKey)
-                        .IfString(ValueKey)
-                    .Pop()
-                .Pop()
-                .Property(IsHiddenKey)
-                    .IfBool(IsHiddenKey)
-                .Pop()
-                .Property(SymbolInfoKey)
-                    .IfObject()
-                        .StoreAsDictionary(SymbolInfoKey)
-                            .IfObject()
-                                .StoreAsDictionary(SymbolInfoEntryKey)
-                                    .IfString(ValueKey)
-                                .Pop()
-                            .Pop()
-                        .Pop()
-                    .Pop()
-                .Pop()
-            .Pop()
-            .ToPlan(CreateHostSpecificTemplateDataFromDeserializationContext);
-
-        private static HostSpecificTemplateData CreateHostSpecificTemplateDataFromDeserializationContext(DeserializationContext context)
-        {
-            HostSpecificTemplateData data = new HostSpecificTemplateData();
-            data.UsageExamples = context.GetValue(UsageExamplesKey, Empty<DeserializationContext>.List.Value).Select(x => x.GetValue<string>(ValueKey)).ToList();
-            data.IsHidden = context.GetValue<bool>(IsHiddenKey);
-
-            Dictionary<string, DeserializationContext> symbolInfoData = context.GetValue<Dictionary<string, DeserializationContext>>(SymbolInfoKey);
-
-            if (!(symbolInfoData is null))
-            {
-                foreach (KeyValuePair<string, DeserializationContext> entry in symbolInfoData)
-                {
-                    data._symbolInfo[entry.Key] = entry.Value.GetValue<Dictionary<string, DeserializationContext>>(SymbolInfoEntryKey).ToDictionary(x => x.Key, x => x.Value.GetValue<string>(ValueKey));
-                }
-            }
-
-            return data;
-        }
 
         public static HostSpecificTemplateData Default { get; } = new HostSpecificTemplateData();
-
-        private readonly Dictionary<string, IReadOnlyDictionary<string, string>> _symbolInfo;
-
-        public HostSpecificTemplateData()
-        {
-            _symbolInfo = new Dictionary<string, IReadOnlyDictionary<string, string>>();
-        }
-
-        [JsonProperty]
-        public List<string> UsageExamples { get; set; }
-
-        [JsonProperty]
-        public IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> SymbolInfo => _symbolInfo;
-
-        [JsonProperty]
-        public bool IsHidden { get; set; }
 
         public HashSet<string> HiddenParameterNames
         {
             get
             {
-                HashSet<string> hiddenNames = new HashSet<string>();
+                HashSet<string> hiddenNames = new HashSet<string>(StringComparer.Ordinal);
                 foreach (KeyValuePair<string, IReadOnlyDictionary<string, string>> paramInfo in SymbolInfo)
                 {
                     if (paramInfo.Value.TryGetValue(IsHiddenKey, out string hiddenStringValue)
@@ -101,24 +36,13 @@ namespace Microsoft.TemplateEngine.Cli
             }
         }
 
-        public HashSet<string> ParametersToAlwaysShow
-        {
-            get
-            {
-                HashSet<string> parametersToAlwaysShow = new HashSet<string>(StringComparer.Ordinal);
-                foreach (KeyValuePair<string, IReadOnlyDictionary<string, string>> paramInfo in SymbolInfo)
-                {
-                    if(paramInfo.Value.TryGetValue(AlwaysShowKey, out string alwaysShowValue)
-                        && bool.TryParse(alwaysShowValue, out bool alwaysShowBoolValue)
-                        && alwaysShowBoolValue)
-                    {
-                        parametersToAlwaysShow.Add(paramInfo.Key);
-                    }
-                }
+        public bool IsHidden { get; set; }
 
-                return parametersToAlwaysShow;
-            }
-        }
+        public IJsonBuilder<HostSpecificTemplateData> JsonBuilder => new JsonBuilder<HostSpecificTemplateData, HostSpecificTemplateData>(() => new HostSpecificTemplateData())
+            .ListOfString().Map<IReadOnlyList<string>, List<string>>(p => p.UsageExamples)
+            .Map(p => p.IsHidden)
+            .Dictionary(Wrapper.For<IReadOnlyDictionary<string, string>, Dictionary<string, string>>(builder => builder.DictionaryOfString().Map<IReadOnlyDictionary<string, string>, Dictionary<string, string>>(p => p.Value)))
+                .Map<IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>>, Dictionary<string, IReadOnlyDictionary<string, string>>>(p => p.SymbolInfo);
 
         public Dictionary<string, string> LongNameOverrides
         {
@@ -135,6 +59,25 @@ namespace Microsoft.TemplateEngine.Cli
                 }
 
                 return map;
+            }
+        }
+
+        public HashSet<string> ParametersToAlwaysShow
+        {
+            get
+            {
+                HashSet<string> parametersToAlwaysShow = new HashSet<string>(StringComparer.Ordinal);
+                foreach (KeyValuePair<string, IReadOnlyDictionary<string, string>> paramInfo in SymbolInfo)
+                {
+                    if (paramInfo.Value.TryGetValue(AlwaysShowKey, out string alwaysShowValue)
+                        && bool.TryParse(alwaysShowValue, out bool alwaysShowBoolValue)
+                        && alwaysShowBoolValue)
+                    {
+                        parametersToAlwaysShow.Add(paramInfo.Key);
+                    }
+                }
+
+                return parametersToAlwaysShow;
             }
         }
 
@@ -155,6 +98,10 @@ namespace Microsoft.TemplateEngine.Cli
                 return map;
             }
         }
+
+        public IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> SymbolInfo { get; private set; }
+
+        public List<string> UsageExamples { get; set; }
 
         public string DisplayNameForParameter(string parameterName)
         {

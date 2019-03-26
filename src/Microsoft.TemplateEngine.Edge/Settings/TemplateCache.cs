@@ -2,16 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Edge.Template;
 using Microsoft.TemplateEngine.Utils;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Edge.Settings
 {
-    public class TemplateCache
+    public class TemplateCache : IJsonSerializable<TemplateCache>
     {
-        private IDictionary<string, ITemplate> _templateMemoryCache = new Dictionary<string, ITemplate>();
+        private readonly IDictionary<string, ITemplate> _templateMemoryCache = new Dictionary<string, ITemplate>();
 
         // locale -> identity -> locator
         private readonly IDictionary<string, IDictionary<string, ILocalizationLocator>> _localizationMemoryCache = new Dictionary<string, IDictionary<string, ILocalizationLocator>>();
@@ -31,7 +30,7 @@ namespace Microsoft.TemplateEngine.Edge.Settings
             TemplateInfo = templatesInCache;
         }
 
-        public TemplateCache(IEngineEnvironmentSettings environmentSettings, JObject parsed, string cacheVersion)
+        public TemplateCache(IEngineEnvironmentSettings environmentSettings, IJsonObject parsed, string cacheVersion)
             : this(environmentSettings)
         {
             TemplateInfo = ParseCacheContent(parsed, cacheVersion);
@@ -81,7 +80,7 @@ namespace Microsoft.TemplateEngine.Edge.Settings
 
         public void Scan(string installDir, bool allowDevInstall)
         {
-            Scan(installDir, out IReadOnlyList<Guid> mountPointIdsForNewInstalls, allowDevInstall);
+            Scan(installDir, out _, allowDevInstall);
         }
 
         public void Scan(string installDir, out IReadOnlyList<Guid> mountPointIdsForNewInstalls)
@@ -116,30 +115,27 @@ namespace Microsoft.TemplateEngine.Edge.Settings
         {
             string cacheContent = _paths.ReadAllText(_paths.User.ExplicitLocaleTemplateCacheFile(locale), "{}");
 
-            try
+            if (_environmentSettings.JsonDomFactory.TryParse(cacheContent, out IJsonToken parsedToken) && parsedToken.TokenType == JsonTokenType.Object)
             {
-                JObject parsed = JObject.Parse(cacheContent);
-                return ParseCacheContent(parsed, existingCacheVersion);
+                return ParseCacheContent((IJsonObject)parsedToken, existingCacheVersion);
             }
-            catch
-            {
-                return Empty<TemplateInfo>.List.Value;
-            }
+
+            return Empty<TemplateInfo>.List.Value;
         }
 
-        private static IReadOnlyList<TemplateInfo> ParseCacheContent(JObject contentJobject, string cacheVersion)
+        private static IReadOnlyList<TemplateInfo> ParseCacheContent(IJsonObject contentJson, string cacheVersion)
         {
             List<TemplateInfo> templateList = new List<TemplateInfo>();
 
-            if (contentJobject.TryGetValue("TemplateInfo", StringComparison.OrdinalIgnoreCase, out JToken templateInfoToken))
+            if (contentJson.TryGetValue("TemplateInfo", StringComparison.OrdinalIgnoreCase, out IJsonToken templateInfoToken))
             {
-                if (templateInfoToken is JArray arr)
+                if (templateInfoToken is IJsonArray arr)
                 {
-                    foreach (JToken entry in arr)
+                    foreach (IJsonToken entry in arr)
                     {
-                        if (entry != null && entry.Type == JTokenType.Object)
+                        if (entry != null && entry.TokenType == JsonTokenType.Object)
                         {
-                            templateList.Add(Settings.TemplateInfo.FromJObject((JObject)entry, cacheVersion));
+                            templateList.Add(Settings.TemplateInfo.FromJson((IJsonObject)entry, cacheVersion));
                         }
                     }
                 }

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Config
 {
@@ -32,7 +32,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Config
 
         // TODO: Allow the rawConfiguration elements to be either strings (as-is) or arrays of strings.
         // The code that consumes instances of this class is already setup to deal with multiple forms of each keyword type.
-        public static ConditionalKeywords FromJObject(JObject rawConfiguration)
+        public static ConditionalKeywords FromJson(IJsonObject rawConfiguration)
         {
             ConditionalKeywords keywords = new ConditionalKeywords();
             string ifKeyword = rawConfiguration.ToString("ifKeyword");

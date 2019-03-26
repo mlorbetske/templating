@@ -1,8 +1,8 @@
 using System;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros.Config;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros
 {
@@ -22,21 +22,21 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros
             }
 
             string sourceVariableName = null;
-            if (deferredConfig.Parameters.TryGetValue("sourceVariableName", out JToken sourceVariableToken) && sourceVariableToken.Type == JTokenType.String)
+            if (deferredConfig.Parameters.TryGetValue("sourceVariableName", out IJsonToken sourceVariableToken) && sourceVariableToken.TokenType == JsonTokenType.String)
             {
-                sourceVariableName = sourceVariableToken.ToString();
+                sourceVariableName = ((IJsonValue)sourceVariableToken).Value.ToString();
             }
 
             string defaultValue = null;
-            if (deferredConfig.Parameters.TryGetValue("defaultValue", out JToken defaultValueToken) && defaultValueToken.Type == JTokenType.String)
+            if (deferredConfig.Parameters.TryGetValue("defaultValue", out IJsonToken defaultValueToken) && defaultValueToken.TokenType == JsonTokenType.String)
             {
-                defaultValue = defaultValueToken.ToString();
+                defaultValue = ((IJsonValue)defaultValueToken).Value.ToString();
             }
 
             string fallbackVariableName = null;
-            if (deferredConfig.Parameters.TryGetValue("fallbackVariableName", out JToken fallbackVariableNameToken) && fallbackVariableNameToken.Type == JTokenType.String)
+            if (deferredConfig.Parameters.TryGetValue("fallbackVariableName", out IJsonToken fallbackVariableNameToken) && fallbackVariableNameToken.TokenType == JsonTokenType.String)
             {
-                fallbackVariableName = fallbackVariableNameToken.ToString();
+                fallbackVariableName = ((IJsonValue)fallbackVariableNameToken).Value.ToString();
             }
 
             IMacroConfig realConfig = new CoalesceMacroConfig(deferredConfig.VariableName, deferredConfig.DataType, sourceVariableName, defaultValue, fallbackVariableName);

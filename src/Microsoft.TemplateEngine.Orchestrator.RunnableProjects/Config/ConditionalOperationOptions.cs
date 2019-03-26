@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Config
 {
@@ -23,7 +23,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Config
         public string Id { get; set; }
         public bool OnByDefault { get; set; }
 
-        public static ConditionalOperationOptions FromJObject(JObject rawConfiguration)
+        public static ConditionalOperationOptions FromJson(IJsonObject rawConfiguration)
         {
             ConditionalOperationOptions options = new ConditionalOperationOptions();
 

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.ValueForms
 {
@@ -11,6 +11,6 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.ValueForms
 
         string Process(IReadOnlyDictionary<string, IValueForm> forms, string value);
 
-        IValueForm FromJObject(string name, JObject configuration);
+        IValueForm FromJson(string name, IJsonObject configuration);
     }
 }

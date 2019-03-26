@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using dotnet_new3;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.ValueForms;
 using Microsoft.TemplateEngine.TestHelper;
-using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.TemplateConfigTests
@@ -14,7 +15,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
         [Fact(DisplayName = nameof(NameSymbolGetsAddedWithDefaultValueForms))]
         public void NameSymbolGetsAddedWithDefaultValueForms()
         {
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, ArrayConfigForSymbolWithFormsButNotIdentity);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, ArrayConfigForSymbolWithFormsButNotIdentity);
             Assert.True(configModel.Symbols.ContainsKey("name"));
 
             ISymbolModel symbolInfo = configModel.Symbols["name"];
@@ -35,7 +36,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
         [Fact(DisplayName = nameof(ParameterSymbolWithoutIdentityValueFormGetsIdentityAddedAsFirst))]
         public void ParameterSymbolWithoutIdentityValueFormGetsIdentityAddedAsFirst()
         {
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, ArrayConfigForSymbolWithFormsButNotIdentity);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, ArrayConfigForSymbolWithFormsButNotIdentity);
             Assert.True(configModel.Symbols.ContainsKey("testSymbol"));
 
             ISymbolModel symbolInfo = configModel.Symbols["testSymbol"];
@@ -48,7 +49,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             Assert.Equal(0, paramSymbol.Forms.GlobalForms.ToList().IndexOf(IdentityValueForm.FormName));
         }
 
-        private static JObject ArrayConfigForSymbolWithFormsButNotIdentity
+        private static IJsonObject ArrayConfigForSymbolWithFormsButNotIdentity
         {
             get
             {
@@ -72,7 +73,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
     }
   }
 }";
-                return JObject.Parse(configString);
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
 
@@ -81,7 +83,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
         [Fact(DisplayName = nameof(ArrayConfigNameSymbolWithoutIdentityFormGetsIdentityFormAddedAsFirst))]
         public void ArrayConfigNameSymbolWithoutIdentityFormGetsIdentityFormAddedAsFirst()
         {
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, ArrayConfigWithNameSymbolAndValueFormsButNotIdentity);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, ArrayConfigWithNameSymbolAndValueFormsButNotIdentity);
             Assert.True(configModel.Symbols.ContainsKey("name"));
 
             ISymbolModel symbolInfo = configModel.Symbols["name"];
@@ -96,7 +98,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             Assert.Equal("baz", configuredValueFormNames[3]);
         }
 
-        private static JObject ArrayConfigWithNameSymbolAndValueFormsButNotIdentity
+        private static IJsonObject ArrayConfigWithNameSymbolAndValueFormsButNotIdentity
         {
             get
             {
@@ -120,24 +122,24 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
     }
   }
 }";
-                return JObject.Parse(configString);
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
 
         [Fact(DisplayName = nameof(ExplicitNameSymbolWithoutBindingGetsDefaultNameBinding))]
         public void ExplicitNameSymbolWithoutBindingGetsDefaultNameBinding()
         {
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, ConfigWithNameSymbolWithoutBinding);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, ConfigWithNameSymbolWithoutBinding);
             Assert.True(configModel.Symbols.ContainsKey("name"));
 
             ISymbolModel symbolInfo = configModel.Symbols["name"];
             Assert.True(symbolInfo is ParameterSymbol);
 
-            ParameterSymbol nameSymbol = symbolInfo as ParameterSymbol;
             Assert.Equal("name", symbolInfo.Binding);
         }
 
-        private static JObject ConfigWithNameSymbolWithoutBinding
+        private static IJsonObject ConfigWithNameSymbolWithoutBinding
         {
             get
             {
@@ -158,24 +160,24 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
     }
   }
 }";
-                return JObject.Parse(configString);
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
 
         [Fact(DisplayName = nameof(ExplicitNameSymbolWithCustomBindingRetainsCustomBinding))]
         public void ExplicitNameSymbolWithCustomBindingRetainsCustomBinding()
         {
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, ConfigWithNameSymbolWithCustomBinding);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, ConfigWithNameSymbolWithCustomBinding);
             Assert.True(configModel.Symbols.ContainsKey("name"));
 
             ISymbolModel symbolInfo = configModel.Symbols["name"];
             Assert.True(symbolInfo is ParameterSymbol);
 
-            ParameterSymbol nameSymbol = symbolInfo as ParameterSymbol;
             Assert.Equal("customBinding", symbolInfo.Binding);
         }
 
-        private static JObject ConfigWithNameSymbolWithCustomBinding
+        private static IJsonObject ConfigWithNameSymbolWithCustomBinding
         {
             get
             {
@@ -197,7 +199,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
     }
   }
 }";
-                return JObject.Parse(configString);
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
 
@@ -206,7 +209,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
         [Fact(DisplayName = nameof(ArrayConfigNameSymbolWithIdentityFormRetainsConfiguredFormsExactly))]
         public void ArrayConfigNameSymbolWithIdentityFormRetainsConfiguredFormsExactly()
         {
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, ArrayConfigWithNameSymbolAndValueFormsWithIdentity);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, ArrayConfigWithNameSymbolAndValueFormsWithIdentity);
             Assert.True(configModel.Symbols.ContainsKey("name"));
 
             ISymbolModel symbolInfo = configModel.Symbols["name"];
@@ -221,7 +224,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             Assert.Equal(IdentityValueForm.FormName, configuredValueFormNames[3]);
         }
 
-        private static JObject ArrayConfigWithNameSymbolAndValueFormsWithIdentity
+        private static IJsonObject ArrayConfigWithNameSymbolAndValueFormsWithIdentity
         {
             get
             {
@@ -245,14 +248,15 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
     }
   }
 }";
-                return JObject.Parse(configString);
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
 
         [Fact(DisplayName = nameof(ObjectConfigNameSymbolWithIdentityFormAndAddIdentityFalseRetainsConfiguredFormsExactly))]
         public void ObjectConfigNameSymbolWithIdentityFormAndAddIdentityFalseRetainsConfiguredFormsExactly()
         {
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, ObjectConfigNameSymbolWithIdentityFormAndAddIdentityFalse);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, ObjectConfigNameSymbolWithIdentityFormAndAddIdentityFalse);
             Assert.True(configModel.Symbols.ContainsKey("name"));
 
             ISymbolModel symbolInfo = configModel.Symbols["name"];
@@ -267,7 +271,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             Assert.Equal("baz", configuredValueFormNames[3]);
         }
 
-        private static JObject ObjectConfigNameSymbolWithIdentityFormAndAddIdentityFalse
+        private static IJsonObject ObjectConfigNameSymbolWithIdentityFormAndAddIdentityFalse
         {
             get
             {
@@ -294,14 +298,15 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
     }
   }
 }";
-                return JObject.Parse(configString);
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
 
         [Fact(DisplayName = nameof(ObjectConfigNameSymbolWithIdentityFormAndAddIdentityTrueRetainsConfiguredFormsExactly))]
         public void ObjectConfigNameSymbolWithIdentityFormAndAddIdentityTrueRetainsConfiguredFormsExactly()
         {
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, ObjectConfigNameSymbolWithIdentityFormAndAddIdentityTrue);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, ObjectConfigNameSymbolWithIdentityFormAndAddIdentityTrue);
             Assert.True(configModel.Symbols.ContainsKey("name"));
 
             ISymbolModel symbolInfo = configModel.Symbols["name"];
@@ -316,7 +321,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             Assert.Equal("baz", configuredValueFormNames[3]);
         }
 
-        private static JObject ObjectConfigNameSymbolWithIdentityFormAndAddIdentityTrue
+        private static IJsonObject ObjectConfigNameSymbolWithIdentityFormAndAddIdentityTrue
         {
             get
             {
@@ -343,11 +348,12 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
     }
   }
 }";
-                return JObject.Parse(configString);
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
 
-        private static JObject ConfigWithObjectValueFormDefinitionAddIdentityFalse
+        private static IJsonObject ConfigWithObjectValueFormDefinitionAddIdentityFalse
         {
             get
             {
@@ -374,14 +380,15 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
     }
   }
 }";
-                return JObject.Parse(configString);
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
 
         [Fact(DisplayName = nameof(NameSymbolObjectValueFormDefinitionRespectsAddIdentityTrue))]
         public void NameSymbolObjectValueFormDefinitionRespectsAddIdentityTrue()
         {
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, NameConfigWithObjectValueFormDefinitionAddIdentityTrue);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, NameConfigWithObjectValueFormDefinitionAddIdentityTrue);
             Assert.True(configModel.Symbols.ContainsKey("name"));
 
             ISymbolModel symbolInfo = configModel.Symbols["name"];
@@ -397,7 +404,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             Assert.Equal("baz", configuredValueFormNames[3]);
         }
 
-        private static JObject NameConfigWithObjectValueFormDefinitionAddIdentityTrue
+        private static IJsonObject NameConfigWithObjectValueFormDefinitionAddIdentityTrue
         {
             get
             {
@@ -424,14 +431,15 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
     }
   }
 }";
-                return JObject.Parse(configString);
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
 
         [Fact(DisplayName = nameof(NameSymbolObjectValueFormDefinitionRespectsAddIdentityFalse))]
         public void NameSymbolObjectValueFormDefinitionRespectsAddIdentityFalse()
         {
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, NameConfigWithObjectValueFormDefinitionAddIdentityFalse);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, NameConfigWithObjectValueFormDefinitionAddIdentityFalse);
             Assert.True(configModel.Symbols.ContainsKey("name"));
 
             ISymbolModel symbolInfo = configModel.Symbols["name"];
@@ -446,7 +454,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             Assert.Equal("baz", configuredValueFormNames[2]);
         }
 
-        private static JObject NameConfigWithObjectValueFormDefinitionAddIdentityFalse
+        private static IJsonObject NameConfigWithObjectValueFormDefinitionAddIdentityFalse
         {
             get
             {
@@ -473,14 +481,15 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
     }
   }
 }";
-                return JObject.Parse(configString);
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
 
         [Fact(DisplayName = nameof(NameSymbolObjectValueFormDefinitionInfersAddIdentityTrue))]
         public void NameSymbolObjectValueFormDefinitionInfersAddIdentityTrue()
         {
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, NameConfigObjectValueFormWithoutIdentityAndAddIdentityUnspecified);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, NameConfigObjectValueFormWithoutIdentityAndAddIdentityUnspecified);
             Assert.True(configModel.Symbols.ContainsKey("name"));
 
             ISymbolModel symbolInfo = configModel.Symbols["name"];
@@ -496,7 +505,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             Assert.Equal("baz", configuredValueFormNames[3]);
         }
 
-        private static JObject NameConfigObjectValueFormWithoutIdentityAndAddIdentityUnspecified
+        private static IJsonObject NameConfigObjectValueFormWithoutIdentityAndAddIdentityUnspecified
         {
             get
             {
@@ -522,14 +531,15 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
     }
   }
 }";
-                return JObject.Parse(configString);
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
 
         [Fact(DisplayName = nameof(NameSymbolObjectValueFormWithIdentityWithoutAddIdentityRetainsConfiguredForms))]
         public void NameSymbolObjectValueFormWithIdentityWithoutAddIdentityRetainsConfiguredForms()
         {
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, NameConfigObjectValueFormWithIdentityAndAddIdentityUnspecified);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, NameConfigObjectValueFormWithIdentityAndAddIdentityUnspecified);
             Assert.True(configModel.Symbols.ContainsKey("name"));
 
             ISymbolModel symbolInfo = configModel.Symbols["name"];
@@ -545,7 +555,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             Assert.Equal(IdentityValueForm.FormName, configuredValueFormNames[3]);
         }
 
-        private static JObject NameConfigObjectValueFormWithIdentityAndAddIdentityUnspecified
+        private static IJsonObject NameConfigObjectValueFormWithIdentityAndAddIdentityUnspecified
         {
             get
             {
@@ -571,14 +581,15 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
     }
   }
 }";
-                return JObject.Parse(configString);
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
 
         [Fact(DisplayName = nameof(ParameterSymbolWithNoValueFormsGetsIdentityFormAdded))]
         public void ParameterSymbolWithNoValueFormsGetsIdentityFormAdded()
         {
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, ConfigForSymbolWithoutValueForms);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, ConfigForSymbolWithoutValueForms);
             Assert.True(configModel.Symbols.ContainsKey("testSymbol"));
 
             ISymbolModel symbolInfo = configModel.Symbols["testSymbol"];
@@ -591,7 +602,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             Assert.Equal(IdentityValueForm.FormName, configuredValueFormNames[0]);
         }
 
-        private static JObject ConfigForSymbolWithoutValueForms
+        private static IJsonObject ConfigForSymbolWithoutValueForms
         {
             get
             {
@@ -612,7 +623,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
     }
   }
 }";
-                return JObject.Parse(configString);
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
 
@@ -620,7 +632,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
         [Fact(DisplayName = nameof(ParameterSymbolWithArrayIdentityValueFormRetainsFormsUnmodified))]
         public void ParameterSymbolWithArrayIdentityValueFormRetainsFormsUnmodified()
         {
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, ArrayConfigForSymbolWithValueFormsIncludingIdentity);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, ArrayConfigForSymbolWithValueFormsIncludingIdentity);
             Assert.True(configModel.Symbols.ContainsKey("testSymbol"));
 
             ISymbolModel symbolInfo = configModel.Symbols["testSymbol"];
@@ -636,7 +648,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             Assert.Equal(IdentityValueForm.FormName, configuredValueFormNames[3]);
         }
 
-        private static JObject ArrayConfigForSymbolWithValueFormsIncludingIdentity
+        private static IJsonObject ArrayConfigForSymbolWithValueFormsIncludingIdentity
         {
             get
             {
@@ -660,7 +672,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
     }
   }
 }";
-                return JObject.Parse(configString);
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
 
@@ -668,7 +681,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
         [Fact(DisplayName = nameof(ObjectValueFormDefinitionRespectsAddIdentityTrue))]
         public void ObjectValueFormDefinitionRespectsAddIdentityTrue()
         {
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, ConfigWithObjectValueFormDefinitionAddIdentityTrue);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, ConfigWithObjectValueFormDefinitionAddIdentityTrue);
             Assert.True(configModel.Symbols.ContainsKey("testSymbol"));
 
             ISymbolModel symbolInfo = configModel.Symbols["testSymbol"];
@@ -684,7 +697,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             Assert.Equal("baz", configuredValueFormNames[3]);
         }
 
-        private static JObject ConfigWithObjectValueFormDefinitionAddIdentityTrue
+        private static IJsonObject ConfigWithObjectValueFormDefinitionAddIdentityTrue
         {
             get
             {
@@ -711,14 +724,15 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
     }
   }
 }";
-                return JObject.Parse(configString);
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
 
         [Fact(DisplayName = nameof(ObjectValueFormDefinitionRespectsAddIdentityFalse))]
         public void ObjectValueFormDefinitionRespectsAddIdentityFalse()
         {
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, ConfigWithObjectValueFormDefinitionAddIdentityFalse);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, ConfigWithObjectValueFormDefinitionAddIdentityFalse);
             Assert.True(configModel.Symbols.ContainsKey("testSymbol"));
 
             ISymbolModel symbolInfo = configModel.Symbols["testSymbol"];
@@ -737,7 +751,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
         [Fact(DisplayName = nameof(ObjectConfigParameterSymbolWithIdentityFormAndAddIdentityFalseRetainsConfiguredFormsExactly))]
         public void ObjectConfigParameterSymbolWithIdentityFormAndAddIdentityFalseRetainsConfiguredFormsExactly()
         {
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, ObjectConfigParameterSymbolWithIdentityFormAndAddIdentityFalse);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, ObjectConfigParameterSymbolWithIdentityFormAndAddIdentityFalse);
             Assert.True(configModel.Symbols.ContainsKey("testSymbol"));
 
             ISymbolModel symbolInfo = configModel.Symbols["testSymbol"];
@@ -752,7 +766,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             Assert.Equal("baz", configuredValueFormNames[3]);
         }
 
-        private static JObject ObjectConfigParameterSymbolWithIdentityFormAndAddIdentityFalse
+        private static IJsonObject ObjectConfigParameterSymbolWithIdentityFormAndAddIdentityFalse
         {
             get
             {
@@ -779,14 +793,15 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
     }
   }
 }";
-                return JObject.Parse(configString);
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
 
         [Fact(DisplayName = nameof(ObjectConfigParameterSymbolWithIdentityFormAndAddIdentityTrueRetainsConfiguredFormsExactly))]
         public void ObjectConfigParameterSymbolWithIdentityFormAndAddIdentityTrueRetainsConfiguredFormsExactly()
         {
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, ObjectConfigParameterSymbolWithIdentityFormAndAddIdentityTrue);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, ObjectConfigParameterSymbolWithIdentityFormAndAddIdentityTrue);
             Assert.True(configModel.Symbols.ContainsKey("testSymbol"));
 
             ISymbolModel symbolInfo = configModel.Symbols["testSymbol"];
@@ -801,7 +816,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             Assert.Equal("baz", configuredValueFormNames[3]);
         }
 
-        private static JObject ObjectConfigParameterSymbolWithIdentityFormAndAddIdentityTrue
+        private static IJsonObject ObjectConfigParameterSymbolWithIdentityFormAndAddIdentityTrue
         {
             get
             {
@@ -828,14 +843,15 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
     }
   }
 }";
-                return JObject.Parse(configString);
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
 
         [Fact(DisplayName = nameof(ParameterSymbolObjectValueFormWithIdentityWithoutAddIdentityRetainsConfiguredForms))]
         public void ParameterSymbolObjectValueFormWithIdentityWithoutAddIdentityRetainsConfiguredForms()
         {
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, ParameterConfigObjectValueFormWithIdentityAndAddIdentityUnspecified);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, ParameterConfigObjectValueFormWithIdentityAndAddIdentityUnspecified);
             Assert.True(configModel.Symbols.ContainsKey("testSymbol"));
 
             ISymbolModel symbolInfo = configModel.Symbols["testSymbol"];
@@ -851,7 +867,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             Assert.Equal(IdentityValueForm.FormName, configuredValueFormNames[3]);
         }
 
-        private static JObject ParameterConfigObjectValueFormWithIdentityAndAddIdentityUnspecified
+        private static IJsonObject ParameterConfigObjectValueFormWithIdentityAndAddIdentityUnspecified
         {
             get
             {
@@ -877,14 +893,15 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
     }
   }
 }";
-                return JObject.Parse(configString);
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
 
         [Fact(DisplayName = nameof(ParameterSymbolObjectValueFormDefinitionInfersAddIdentityTrue))]
         public void ParameterSymbolObjectValueFormDefinitionInfersAddIdentityTrue()
         {
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, ParameterConfigObjectValueFormWithoutIdentityAndAddIdentityUnspecified);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, ParameterConfigObjectValueFormWithoutIdentityAndAddIdentityUnspecified);
             Assert.True(configModel.Symbols.ContainsKey("testSymbol"));
 
             ISymbolModel symbolInfo = configModel.Symbols["testSymbol"];
@@ -900,7 +917,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             Assert.Equal("baz", configuredValueFormNames[3]);
         }
 
-        private static JObject ParameterConfigObjectValueFormWithoutIdentityAndAddIdentityUnspecified
+        private static IJsonObject ParameterConfigObjectValueFormWithoutIdentityAndAddIdentityUnspecified
         {
             get
             {
@@ -926,7 +943,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
     }
   }
 }";
-                return JObject.Parse(configString);
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
     }

@@ -1,22 +1,19 @@
 using System;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Abstractions.TemplateUpdates;
-using Newtonsoft.Json.Linq;
+using Microsoft.TemplateEngine.Utils.Json;
 
 namespace Microsoft.TemplateEngine.Edge.Settings
 {
-    internal class InstallDescriptorCacheJsonSerializer
+    internal static class InstallDescriptorCacheJsonSerializer
     {
-        public InstallDescriptorCacheJsonSerializer()
+        public static bool TrySerialize(IJsonDocumentObjectModelFactory domFactory, InstallUnitDescriptorCache descriptorCache, out string serialized)
         {
-        }
+            IJsonObject cacheObject = domFactory.CreateObject();
 
-        public bool TrySerialize(InstallUnitDescriptorCache descriptorCache, out string serialized)
-        {
-            JObject cacheObject = new JObject();
-
-            if (JsonSerializerHelpers.TrySerializeDictionary(descriptorCache.InstalledItems, JsonSerializerHelpers.GuidKeyConverter, JsonSerializerHelpers.StringValueConverter, out JObject installedItemsObject))
+            if (JsonSerializerHelpers.TrySerializeDictionary(domFactory, descriptorCache.InstalledItems, JsonSerializerHelpers.GuidKeyConverter, JsonSerializerHelpers.StringValueConverter, out IJsonObject installedItemsObject))
             {
-                cacheObject.Add(nameof(descriptorCache.InstalledItems), installedItemsObject);
+                cacheObject.SetValue(nameof(descriptorCache.InstalledItems), installedItemsObject);
             }
             else
             {
@@ -24,9 +21,9 @@ namespace Microsoft.TemplateEngine.Edge.Settings
                 return false;
             }
 
-            if (JsonSerializerHelpers.TrySerializeDictionary(descriptorCache.Descriptors, JsonSerializerHelpers.StringKeyConverter, InstallUnitDescriptorToJObjectConverter, out JObject descriptorObject))
+            if (JsonSerializerHelpers.TrySerializeDictionary(domFactory, descriptorCache.Descriptors, JsonSerializerHelpers.StringKeyConverter, InstallUnitDescriptorToJsonConverter, out IJsonObject descriptorObject))
             {
-                cacheObject.Add(nameof(descriptorCache.Descriptors), descriptorObject);
+                cacheObject.SetValue(nameof(descriptorCache.Descriptors), descriptorObject);
             }
             else
             {
@@ -34,19 +31,19 @@ namespace Microsoft.TemplateEngine.Edge.Settings
                 return false;
             }
 
-            serialized = cacheObject.ToString();
+            serialized = cacheObject.GetJsonString();
             return true;
         }
 
-        private static Func<IInstallUnitDescriptor, JObject> InstallUnitDescriptorToJObjectConverter = descriptor =>
+        private static Func<IJsonDocumentObjectModelFactory, IInstallUnitDescriptor, IJsonObject> InstallUnitDescriptorToJsonConverter = (domFactory, descriptor) =>
         {
-            JObject descriptorObject = new JObject();
+            IJsonObject descriptorObject = domFactory.CreateObject();
 
-            descriptorObject.Add(nameof(IInstallUnitDescriptor.FactoryId), descriptor.FactoryId);
+            descriptorObject.SetValue(nameof(IInstallUnitDescriptor.FactoryId), descriptor.FactoryId);
 
-            if (JsonSerializerHelpers.TrySerializeStringDictionary(descriptor.Details, out JObject detailsObject))
+            if (JsonSerializerHelpers.TrySerializeStringDictionary(domFactory, descriptor.Details, out IJsonObject detailsObject))
             {
-                descriptorObject.Add(nameof(IInstallUnitDescriptor.Details), detailsObject);
+                descriptorObject.SetValue(nameof(IInstallUnitDescriptor.Details), detailsObject);
             }
             else
             {

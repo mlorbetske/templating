@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Abstractions
 {
-    public interface IBaselineInfo
+    public interface IBaselineInfo : IJsonSerializable<IBaselineInfo>
     {
         string Description { get; }
 

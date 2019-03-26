@@ -1,8 +1,8 @@
 using System;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros.Config;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros
 {
@@ -67,26 +67,26 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros
             int low;
             int high;
 
-            if (!deferredConfig.Parameters.TryGetValue("low", out JToken lowToken) || lowToken.Type != JTokenType.Integer)
+            if (!deferredConfig.Parameters.TryGetValue("low", out IJsonToken lowToken) || lowToken.TokenType != JsonTokenType.Number)
             {
                 low = LowPortDefault;
             }
             else
             {
-                low = lowToken.Value<int>();
+                low = (int)(double)((IJsonValue)lowToken).Value;
                 if (low < LowPortDefault)
                 {
                     low = LowPortDefault;
                 }
             }
 
-            if (!deferredConfig.Parameters.TryGetValue("high", out JToken highToken) || highToken.Type != JTokenType.Integer)
+            if (!deferredConfig.Parameters.TryGetValue("high", out IJsonToken highToken) || highToken.TokenType != JsonTokenType.Number)
             {
                 high = HighPortDefault;
             }
             else
             {
-                high = highToken.Value<int>();
+                high = (int)(double)((IJsonValue)highToken).Value;
                 if (high > HighPortDefault)
                 {
                     high = HighPortDefault;
@@ -100,7 +100,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros
             }
 
             int fallback = 0;
-            if(deferredConfig.Parameters.TryGetValue("fallback", out JToken fallbackToken) && fallbackToken.Type == JTokenType.Integer)
+            if(deferredConfig.Parameters.TryGetValue("fallback", out IJsonToken fallbackToken) && fallbackToken.TokenType == JsonTokenType.Number)
             {
                 fallback = fallbackToken.ToInt32();
             }

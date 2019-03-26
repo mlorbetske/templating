@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Abstractions.Mount;
 using Microsoft.TemplateEngine.Core;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Core.Operations;
 using Microsoft.TemplateEngine.Utils;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Config
 {
@@ -15,22 +15,21 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Config
 
         public Guid Id => new Guid("3E8BCBF0-D631-45BA-A12D-FBF1DE03AA38");
 
-        public IEnumerable<IOperationProvider> ConfigureFromJObject(JObject rawConfiguration, IDirectory templateRoot)
+        public IEnumerable<IOperationProvider> ConfigureFromJson(IJsonObject rawConfiguration, IDirectory templateRoot)
         {
             string commentStyle = rawConfiguration.ToString("style");
-            IEnumerable<IOperationProvider> operations = null;
 
             if (string.IsNullOrEmpty(commentStyle) || string.Equals(commentStyle, "custom", StringComparison.OrdinalIgnoreCase))
             {
-                operations = ConditionalCustomConfig.ConfigureFromJObject(rawConfiguration);
+                operations = ConditionalCustomConfig.ConfigureFromJson(rawConfiguration);
             }
             else if (string.Equals(commentStyle, "line", StringComparison.OrdinalIgnoreCase))
             {
-                operations = ConditionalLineCommentConfig.ConfigureFromJObject(rawConfiguration);
+                operations = ConditionalLineCommentConfig.ConfigureFromJson(rawConfiguration);
             }
             else if (string.Equals(commentStyle, "block", StringComparison.OrdinalIgnoreCase))
             {
-                operations = ConditionalBlockCommentConfig.ConfigureFromJObject(rawConfiguration);
+                operations = ConditionalBlockCommentConfig.ConfigureFromJson(rawConfiguration);
             }
             else
             {

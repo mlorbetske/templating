@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Newtonsoft.Json;
 using System.Linq;
 
 namespace Microsoft.TemplateEngine.Edge.Settings
@@ -33,7 +32,6 @@ namespace Microsoft.TemplateEngine.Edge.Settings
             return false;
         }
 
-        [JsonProperty]
-        public Dictionary<string, IReadOnlyList<string>> CommandAliases { get; set; }
+        public Dictionary<string, IReadOnlyList<string>> CommandAliases { get; }
     }
 }

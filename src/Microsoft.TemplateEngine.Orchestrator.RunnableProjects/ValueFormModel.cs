@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.ValueForms;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 {
@@ -52,16 +52,16 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
             }
         }
 
-        public static IValueForm GetForm(string name, JObject obj)
+        public static IValueForm GetForm(string name, IJsonObject obj)
         {
             string identifier = obj.ToString("identifier");
 
             if (!FormLookup.TryGetValue(identifier, out IValueForm value))
             {
-                return FormLookup[IdentityValueForm.FormName].FromJObject(name, obj);
+                return FormLookup[IdentityValueForm.FormName].FromJson(name, obj);
             }
 
-            return value.FromJObject(name, obj);
+            return value.FromJson(name, obj);
         }
     }
 }

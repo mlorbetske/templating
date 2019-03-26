@@ -1,9 +1,10 @@
 using System.Collections.Generic;
+using dotnet_new3;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Core.Operations;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Config;
 using Microsoft.TemplateEngine.TestHelper;
-using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.TemplateConfigTests
@@ -12,7 +13,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
     {
         // defines a template configuration with a custom conditional configuration.
         // The style is omitted, which implies custon
-        private static JObject CustomConditionalSetupNoStyleSpecification
+        private static IJsonObject CustomConditionalSetupNoStyleSpecification
         {
             get
             {
@@ -26,7 +27,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
              ""wholeLine"": ""true"",
 }
 ";
-                return JObject.Parse(configString);
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
 
@@ -34,7 +36,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
         [Fact(DisplayName = nameof(TestCustomConditionalSetupNoStyleSpecification))]
         public void TestCustomConditionalSetupNoStyleSpecification()
         {
-            IEnumerable<IOperationProvider> ops = new ConditionalConfig().ConfigureFromJObject(CustomConditionalSetupNoStyleSpecification, null);
+            IEnumerable<IOperationProvider> ops = new ConditionalConfig().ConfigureFromJson(CustomConditionalSetupNoStyleSpecification, null);
             IList<IOperationProvider> operations = new List<IOperationProvider>(ops);
 
             Assert.Equal(1, operations.Count);
@@ -60,7 +62,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             Assert.True(conditionalOp.TrimWhitespace);
         }
 
-        private static JObject CustomConditionalSetupExplicitStyleSpecification
+        private static IJsonObject CustomConditionalSetupExplicitStyleSpecification
         {
             get
             {
@@ -74,14 +76,16 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
              ""trim"" : ""true"",
              ""wholeLine"": ""true"",
 }";
-                return JObject.Parse(configString);
+
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
 
         [Fact(DisplayName = nameof(TestCustomConditionalSetupExplicitStyleSpecification))]
         public void TestCustomConditionalSetupExplicitStyleSpecification()
         {
-            IEnumerable<IOperationProvider> ops = new ConditionalConfig().ConfigureFromJObject(CustomConditionalSetupExplicitStyleSpecification, null);
+            IEnumerable<IOperationProvider> ops = new ConditionalConfig().ConfigureFromJson(CustomConditionalSetupExplicitStyleSpecification, null);
             IList<IOperationProvider> operations = new List<IOperationProvider>(ops);
 
             Assert.Equal(1, operations.Count);
@@ -107,7 +111,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             Assert.True(conditionalOp.TrimWhitespace);
         }
 
-        private static JObject LineConditionalSetup
+        private static IJsonObject LineConditionalSetup
         {
             get
             {
@@ -117,14 +121,16 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
         ""token"": ""//""
 }
 ";
-                return JObject.Parse(configString);
+
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
 
         [Fact(DisplayName = nameof(TestLineCommentConditionalSetup))]
         public void TestLineCommentConditionalSetup()
         {
-            IEnumerable<IOperationProvider> ops = new ConditionalConfig().ConfigureFromJObject(LineConditionalSetup, null);
+            IEnumerable<IOperationProvider> ops = new ConditionalConfig().ConfigureFromJson(LineConditionalSetup, null);
             IList<IOperationProvider> operations = new List<IOperationProvider>(ops);
 
             Assert.Equal(3, operations.Count);
@@ -160,7 +166,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             Assert.True(conditionalOp.TrimWhitespace);
         }
 
-        private static JObject BlockConditionalSetup
+        private static IJsonObject BlockConditionalSetup
         {
             get
             {
@@ -171,14 +177,15 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
         ""endToken"": ""*/"",
         ""pseudoEndToken"": ""* /""
 }";
-                return JObject.Parse(configString);
+                new JsonDomFactory().TryParse(configString, out IJsonToken root);
+                return (IJsonObject)root;
             }
         }
 
         [Fact(DisplayName = nameof(TestBlockCommentConditionalSetup))]
         public void TestBlockCommentConditionalSetup()
         {
-            IEnumerable<IOperationProvider> ops = new ConditionalConfig().ConfigureFromJObject(BlockConditionalSetup, null);
+            IEnumerable<IOperationProvider> ops = new ConditionalConfig().ConfigureFromJson(BlockConditionalSetup, null);
             IList<IOperationProvider> operations = new List<IOperationProvider>(ops);
 
             Assert.Equal(2, operations.Count);  // conditional & pseudo comment balancer

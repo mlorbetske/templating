@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros.Config;
 using Microsoft.TemplateEngine.Utils;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros
 {
@@ -87,19 +87,19 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros
                 throw new InvalidCastException("Couldn't cast the rawConfig as a GeneratedSymbolDeferredMacroConfig");
             }
 
-            if (!deferredConfig.Parameters.TryGetValue("source", out JToken sourceVarToken))
+            if (!deferredConfig.Parameters.TryGetValue("source", out IJsonToken sourceVarToken))
             {
                 throw new ArgumentNullException("source");
             }
-            string sourceVariable = sourceVarToken.ToString();
+            string sourceVariable = ((IJsonValue)sourceVarToken).Value.ToString();
 
             List<KeyValuePair<string, string>> replacementSteps = new List<KeyValuePair<string, string>>();
-            if (deferredConfig.Parameters.TryGetValue("steps", out JToken stepListToken))
+            if (deferredConfig.Parameters.TryGetValue("steps", out IJsonToken stepListToken))
             {
-                JArray stepList = (JArray)stepListToken;
-                foreach (JToken step in stepList)
+                IJsonArray stepList = (IJsonArray)stepListToken;
+                foreach (IJsonToken step in stepList)
                 {
-                    JObject map = (JObject)step;
+                    IJsonObject map = (IJsonObject)step;
                     string regex = map.ToString("regex");
                     string replaceWith = map.ToString("replacement");
                     replacementSteps.Add(new KeyValuePair<string, string>(regex, replaceWith));

@@ -4,11 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Abstractions.Mount;
 using Microsoft.TemplateEngine.Abstractions.PhysicalFileSystem;
 using Microsoft.TemplateEngine.Edge.Mount.FileSystem;
 using Microsoft.TemplateEngine.Utils;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.TemplateEngine.Edge.Settings
 {
@@ -62,10 +62,9 @@ namespace Microsoft.TemplateEngine.Edge.Settings
 
         private void WriteSettingsFile()
         {
-            SettingsStoreJsonSerializer settingsStoreSerializer = new SettingsStoreJsonSerializer();
-            if (settingsStoreSerializer.TrySerialize(_userSettings, out string serializedStore))
+            if (SettingsStoreJsonSerializer.TrySerialize(_environmentSettings.JsonDomFactory, _userSettings, out string serializedStore))
             {
-                _paths.WriteAllText(_paths.User.SettingsFile, serializedStore.ToString());
+                _paths.WriteAllText(_paths.User.SettingsFile, serializedStore);
             }
         }
 
@@ -99,18 +98,19 @@ namespace Microsoft.TemplateEngine.Edge.Settings
             }
 
             string descriptorFileContents = _paths.ReadAllText(_paths.User.InstallUnitDescriptorsFile, "{}");
-            JObject parsed = JObject.Parse(descriptorFileContents);
 
-            _installUnitDescriptorCache = InstallUnitDescriptorCache.FromJObject(_environmentSettings, parsed);
-            _installUnitDescriptorsLoaded = true;
+            if (_environmentSettings.JsonDomFactory.TryParse(descriptorFileContents, out IJsonToken parsedToken) && parsedToken is IJsonObject parsed)
+            {
+                _installUnitDescriptorCache = InstallUnitDescriptorCache.FromJson(_environmentSettings, parsed);
+                _installUnitDescriptorsLoaded = true;
+            }
         }
 
         // Write the install unit descriptors.
         // Get them from the property to ensure they're loaded. Descriptors are loaded on demand, not at startup.
         private void WriteInstallDescriptorCache()
         {
-            InstallDescriptorCacheJsonSerializer serializer = new InstallDescriptorCacheJsonSerializer();
-            if (serializer.TrySerialize(InstallUnitDescriptorCache, out string serialized))
+            if (InstallDescriptorCacheJsonSerializer.TrySerialize(_environmentSettings.JsonDomFactory, InstallUnitDescriptorCache, out string serialized))
             {
                 _paths.WriteAllText(_paths.User.InstallUnitDescriptorsFile, serialized);
             }
@@ -142,15 +142,15 @@ namespace Microsoft.TemplateEngine.Edge.Settings
                         Task.Delay(2).Wait();
                     }
                 }
-            JObject parsed;
+            IJsonObject parsed;
             using (Timing.Over(_environmentSettings.Host, "Parse settings"))
-                try
+                if (_environmentSettings.JsonDomFactory.TryParse(userSettings, out IJsonToken parsedToken) && parsedToken.TokenType == JsonTokenType.Object)
                 {
-                    parsed = JObject.Parse(userSettings);
+                    parsed = (IJsonObject)parsedToken;
                 }
-                catch (Exception ex)
+                else
                 {
-                    throw new EngineInitializationException("Error parsing the user settings file", "Settings File", ex);
+                    throw new EngineInitializationException("Error parsing the user settings file", "Settings File");
                 }
             using (Timing.Over(_environmentSettings.Host, "Deserialize user settings"))
                 _userSettings = new SettingsStore(parsed);
@@ -210,9 +210,16 @@ namespace Microsoft.TemplateEngine.Edge.Settings
                 userTemplateCache = "{}";
             }
 
-            JObject parsed;
+            IJsonObject parsed;
             using (Timing.Over(_environmentSettings.Host, "Parse template cache"))
-                parsed = JObject.Parse(userTemplateCache);
+                if (_environmentSettings.JsonDomFactory.TryParse(userTemplateCache, out IJsonToken parsedToken) && parsedToken.TokenType == JsonTokenType.Object)
+                {
+                    parsed = (IJsonObject)parsedToken;
+                }
+                else
+                {
+                    throw new EngineInitializationException("Error parsing the template cache", "Settings File");
+                }
             using (Timing.Over(_environmentSettings.Host, "Init template cache"))
                 _userTemplateCache = new TemplateCache(_environmentSettings, parsed, _userSettings.Version);
 
@@ -469,8 +476,7 @@ namespace Microsoft.TemplateEngine.Edge.Settings
             {
                 TemplateCache cache = new TemplateCache(_environmentSettings, toCache);
 
-                TemplateCacheJsonSerializer cacheSerializer = new TemplateCacheJsonSerializer();
-                if (cacheSerializer.TrySerialize(cache, out string newSerialization))
+                if (TemplateCacheJsonSerializer.TrySerialize(_environmentSettings.JsonDomFactory, cache, out string newSerialization))
                 {
                     string newPath = _paths.User.ExplicitLocaleTemplateCacheFile(locale);
                     _paths.WriteAllText(newPath, newSerialization);

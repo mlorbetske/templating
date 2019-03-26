@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 {
-    public interface ISymbolModel
+    public interface ISymbolModel : IJsonSerializable<ISymbolModel>
     {
         string Type { get; }
 
@@ -11,5 +13,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
         string Replaces { get; set; }
 
         IReadOnlyList<IReplacementContext> ReplacementContexts { get; }
+
+        ISymbolModel PrepareForUse(IParameterSymbolLocalizationModel localization, string defaultOverride);
     }
 }

@@ -180,7 +180,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
                     if (_operationConfigLookup.TryGetValue(opType, out realConfigObject))
                     {
                         customOperations.AddRange(
-                            realConfigObject.ConfigureFromJObject(opModel.Configuration, templateRoot));
+                            realConfigObject.ConfigureFromJson(opModel.Configuration, templateRoot));
                     }
                     else
                     {

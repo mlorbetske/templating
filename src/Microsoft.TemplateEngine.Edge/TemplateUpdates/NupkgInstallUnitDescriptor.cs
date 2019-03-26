@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.TemplateEngine.Abstractions.TemplateUpdates;
-using Newtonsoft.Json;
 
 namespace Microsoft.TemplateEngine.Edge.TemplateUpdates
 {

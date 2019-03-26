@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
+using dotnet_new3;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Abstractions.TemplateUpdates;
 using Microsoft.TemplateEngine.Edge.TemplateUpdates;
 using Microsoft.TemplateEngine.TestHelper;
-using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace Microsoft.TemplateEngine.Edge.UnitTests
@@ -73,8 +74,9 @@ namespace Microsoft.TemplateEngine.Edge.UnitTests
         ""Version"": ""1.2.3""
     }
 }";
-            JObject descriptorJObject = JObject.Parse(serializedDescriptor);
-            Assert.True(InstallUnitDescriptorFactory.TryParse(EngineEnvironmentSettings, descriptorJObject, out IInstallUnitDescriptor parsedDescriptor));
+            IJsonDocumentObjectModelFactory domFactory = new JsonDomFactory();
+            Assert.True(domFactory.TryParse(serializedDescriptor, out IJsonToken descriptorToken));
+            Assert.True(InstallUnitDescriptorFactory.TryParse(EngineEnvironmentSettings, (IJsonObject)descriptorToken, out IInstallUnitDescriptor parsedDescriptor));
 
             NupkgInstallUnitDescriptor nupkgDescriptor = parsedDescriptor as NupkgInstallUnitDescriptor;
             Assert.NotNull(nupkgDescriptor);
@@ -101,8 +103,7 @@ namespace Microsoft.TemplateEngine.Edge.UnitTests
                 { PackageNameKey, packageName },
                 { VersionKey, version }
             };
-
-            Assert.False(new NupkgInstallUnitDescriptorFactory().TryCreateFromDetails(details, out IInstallUnitDescriptor descriptor));
+            Assert.False(new NupkgInstallUnitDescriptorFactory().TryCreateFromDetails(details, out _));
         }
 
         [Fact(DisplayName = nameof(NupkgDescriptorFactoryFailsOnMissingPackageNameTest))]
@@ -116,8 +117,7 @@ namespace Microsoft.TemplateEngine.Edge.UnitTests
                 { MountPointIdKey, mountPointId.ToString() },
                 { VersionKey, version }
             };
-
-            Assert.False(new NupkgInstallUnitDescriptorFactory().TryCreateFromDetails(details, out IInstallUnitDescriptor descriptor));
+            Assert.False(new NupkgInstallUnitDescriptorFactory().TryCreateFromDetails(details, out _));
         }
 
         [Fact(DisplayName = nameof(NupkgDescriptorFactoryFailsOnMissingVersionTest))]
@@ -131,8 +131,7 @@ namespace Microsoft.TemplateEngine.Edge.UnitTests
                 { MountPointIdKey, mountPointId.ToString() },
                 { PackageNameKey, packageName },
             };
-
-            Assert.False(new NupkgInstallUnitDescriptorFactory().TryCreateFromDetails(details, out IInstallUnitDescriptor descriptor));
+            Assert.False(new NupkgInstallUnitDescriptorFactory().TryCreateFromDetails(details, out _));
         }
     }
 }

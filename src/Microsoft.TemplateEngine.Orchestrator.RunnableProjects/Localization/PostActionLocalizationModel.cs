@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.TemplateEngine.Abstractions;
-using Newtonsoft.Json.Linq;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Localization
 {
@@ -16,7 +16,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Localization
         // in the culture neutral TemplateConfigFile
         public IReadOnlyList<string> Instructions { get; set; }
 
-        public static PostActionLocalizationModel FromJObject(JObject postActionSection)
+        public static PostActionLocalizationModel FromJson(IJsonObject postActionSection)
         {
             return new PostActionLocalizationModel()
             {

@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Abstractions
 {
-    public interface ITemplateInfo
+    public interface ITemplateInfo : IJsonSerializable<ITemplateInfo>
     {
         string Author { get; }
 

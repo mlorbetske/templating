@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.TemplateEngine.Abstractions;
-using Newtonsoft.Json.Linq;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Cli.PostActionProcessors
 {
@@ -24,28 +24,29 @@ namespace Microsoft.TemplateEngine.Cli.PostActionProcessors
 
             if (actionConfig.Args.TryGetValue("files", out string specificFilesString))
             {
-                JToken config = JToken.Parse(specificFilesString);
-
-                if (config.Type == JTokenType.String)
+                if (environment.JsonDomFactory.TryParse(specificFilesString, out IJsonToken config))
                 {
-                    targetFiles = specificFilesString.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).SelectMany(x => GetTargetForSource(creationEffects, x));
-                }
-                else if (config is JArray arr)
-                {
-                    List<string> allFiles = new List<string>();
-                    foreach (JToken child in arr)
+                    if (config.TokenType == JsonTokenType.String)
                     {
-                        if (child.Type != JTokenType.String)
+                        targetFiles = specificFilesString.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).SelectMany(x => GetTargetForSource(creationEffects, x));
+                    }
+                    else if (config is IJsonArray arr)
+                    {
+                        List<string> allFiles = new List<string>();
+                        foreach (IJsonToken child in arr)
                         {
-                            continue;
+                            if (child.TokenType != JsonTokenType.String)
+                            {
+                                continue;
+                            }
+
+                            allFiles.AddRange(GetTargetForSource(creationEffects, ((IJsonValue)child).Value.ToString()));
                         }
 
-                        allFiles.AddRange(GetTargetForSource(creationEffects, child.ToString()));
-                    }
-
-                    if (allFiles.Count > 0)
-                    {
-                        targetFiles = allFiles;
+                        if (allFiles.Count > 0)
+                        {
+                            targetFiles = allFiles;
+                        }
                     }
                 }
             }

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.TemplateEngine.Abstractions;
-using Newtonsoft.Json.Linq;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Cli.PostActionProcessors
 {
@@ -21,21 +21,27 @@ namespace Microsoft.TemplateEngine.Cli.PostActionProcessors
             bool allSucceeded = true;
             foreach (KeyValuePair<string, string> entry in actionConfig.Args)
             {
-                string[] values;
+                string[] values = null;
                 try
                 {
-                    JArray valueArray = JArray.Parse(entry.Value);
-                    values = new string[valueArray.Count];
-
-                    for (int i = 0; i < valueArray.Count; ++i)
+                    if (environment.JsonDomFactory.TryParse(entry.Value, out IJsonToken config))
                     {
-                        values[i] = valueArray[i].ToString();
+                        if (config is IJsonArray valueArray)
+                        {
+                            values = new string[valueArray.Count];
+
+                            for (int i = 0; i < valueArray.Count; ++i)
+                            {
+                                values[i] = ((IJsonValue)valueArray[i]).Value.ToString();
+                            }
+                        }
                     }
                 }
                 catch
                 {
-                    values = new[] {entry.Value};
                 }
+
+                values = values ?? new[] { entry.Value };
 
                 foreach (string file in values)
                 {

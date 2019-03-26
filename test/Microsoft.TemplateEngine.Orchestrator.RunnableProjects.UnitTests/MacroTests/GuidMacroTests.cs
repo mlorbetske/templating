@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros.Config;
 using Microsoft.TemplateEngine.TestHelper;
-using static Microsoft.TemplateEngine.Orchestrator.RunnableProjects.RunnableProjectGenerator;
-using Newtonsoft.Json.Linq;
 using Xunit;
+using static Microsoft.TemplateEngine.Orchestrator.RunnableProjects.RunnableProjectGenerator;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.MacroTests
 {
@@ -33,8 +33,10 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Macro
         [Fact(DisplayName = nameof(TestDeferredGuidConfig))]
         public void TestDeferredGuidConfig()
         {
-            Dictionary<string, JToken> jsonParameters = new Dictionary<string, JToken>();
-            jsonParameters.Add("format", null);
+            Dictionary<string, IJsonToken> jsonParameters = new Dictionary<string, IJsonToken>
+            {
+                { "format", null }
+            };
             string variableName = "myGuid1";
             GeneratedSymbolDeferredMacroConfig deferredConfig = new GeneratedSymbolDeferredMacroConfig("GuidMacro", "string", variableName, jsonParameters);
 
@@ -51,8 +53,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Macro
 
         private static void ValidateGuidMacroCreatedParametersWithResolvedValues(string variableName, IParameterSet parameters)
         {
-            ITemplateParameter setParam;
-            Assert.True(parameters.TryGetParameterDefinition(variableName, out setParam));
+            Assert.True(parameters.TryGetParameterDefinition(variableName, out ITemplateParameter setParam));
 
             Guid paramValue = Guid.Parse((string)parameters.ResolvedValues[setParam]);
 
@@ -61,8 +62,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Macro
             for (int i = 0; i < guidFormats.Length; ++i)
             {
                 string otherFormatParamName = variableName + "-" + guidFormats[i];
-                ITemplateParameter testParam;
-                Assert.True(parameters.TryGetParameterDefinition(otherFormatParamName, out testParam));
+
+                Assert.True(parameters.TryGetParameterDefinition(otherFormatParamName, out ITemplateParameter testParam));
                 Guid testValue = Guid.Parse((string)parameters.ResolvedValues[testParam]);
                 Assert.Equal(paramValue, testValue);
             }

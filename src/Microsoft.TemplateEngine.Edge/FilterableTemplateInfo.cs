@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Edge
 {
@@ -96,5 +97,7 @@ namespace Microsoft.TemplateEngine.Edge
         public bool HasScriptRunningPostActions { get; set; }
 
         public DateTime? ConfigTimestampUtc { get; set; }
+
+        public IJsonBuilder<ITemplateInfo> JsonBuilder => throw new NotSupportedException("FilterableTemplateInfo is not expected to be read from JSON");
     }
 }

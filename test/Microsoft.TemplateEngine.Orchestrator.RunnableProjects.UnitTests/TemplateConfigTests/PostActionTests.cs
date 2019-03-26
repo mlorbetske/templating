@@ -1,11 +1,10 @@
-﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using Microsoft.TemplateEngine.TestHelper;
-using Newtonsoft.Json.Linq;
+using dotnet_new3;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core;
 using Microsoft.TemplateEngine.Core.Contracts;
+using Microsoft.TemplateEngine.TestHelper;
 using Xunit;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.TemplateConfigTests
@@ -19,7 +18,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
         [InlineData(false, false, 0, null, null)]
         public void TestPostActionConditioning(bool condition1, bool condition2, int expectedActionCount, string[] firstResult, string[] secondResult)
         {
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, TestTemplateJson);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, TestTemplateJson);
             IVariableCollection vc = new VariableCollection
             {
                 ["ActionOneCondition"] = condition1,
@@ -56,7 +55,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
         [InlineData(false, true, 1, "BeOS", "Default instructions (action 2)", null)]
         public void TestPostActionInstructionsConditioning(bool condition1, bool condition2, int expectedActionCount, string operatingSystemValue, string firstInstruction, string secondInstruction)
         {
-            SimpleConfigModel configModel = SimpleConfigModel.FromJObject(EngineEnvironmentSettings, TestTemplateJson);
+            SimpleConfigModel configModel = SimpleConfigModel.FromJson(EngineEnvironmentSettings, TestTemplateJson);
             IVariableCollection vc = new VariableCollection
             {
                 ["ActionOneCondition"] = condition1,
@@ -78,7 +77,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
             }
         }
 
-        private static JObject TestTemplateJson
+        private static IJsonObject TestTemplateJson
         {
             get
             {
@@ -148,7 +147,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Templ
     },
   ]
 }";
-                return JObject.Parse(configString);
+                new JsonDomFactory().TryParse(configString, out IJsonToken token);
+                return (IJsonObject)token;
             }
         }
     }

@@ -1,33 +1,30 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Abstractions.Mount;
-using Newtonsoft.Json.Linq;
+using Microsoft.TemplateEngine.Utils.Json;
 
 namespace Microsoft.TemplateEngine.Edge.Settings
 {
-    internal class SettingsStoreJsonSerializer
+    internal static class SettingsStoreJsonSerializer
     {
-        public SettingsStoreJsonSerializer()
+        public static bool TrySerialize(IJsonDocumentObjectModelFactory domFactory, SettingsStore settingsStore, out string serialized)
         {
-        }
+            IJsonObject storeObject = domFactory.CreateObject();
 
-        public bool TrySerialize(SettingsStore settingsStore, out string serialized)
-        {
-            JObject storeObject = new JObject();
+            storeObject.SetValue(nameof(SettingsStore.Version), domFactory.CreateValue(settingsStore.Version));
 
-            storeObject.Add(nameof(SettingsStore.Version), settingsStore.Version);
-
-            if (JsonSerializerHelpers.TrySerializeIEnumerable(settingsStore.MountPoints, SerializeMountPoint, out JArray mountPointListObject)
-                && JsonSerializerHelpers.TrySerializeStringDictionary(settingsStore.ComponentGuidToAssemblyQualifiedName, out JObject componentGuidToAssemblyQualifiedNameObject)
-                && JsonSerializerHelpers.TrySerializeIEnumerable(settingsStore.ProbingPaths, JsonSerializerHelpers.StringValueConverter, out JArray probingPathsObject)
-                && TrySerializeComponentTypeToGuidList(settingsStore.ComponentTypeToGuidList, out JObject componentTypeToGuidListObject))
+            if (JsonSerializerHelpers.TrySerializeIEnumerable(domFactory, settingsStore.MountPoints, SerializeMountPoint, out IJsonArray mountPointListObject)
+                && JsonSerializerHelpers.TrySerializeStringDictionary(domFactory, settingsStore.ComponentGuidToAssemblyQualifiedName, out IJsonObject componentGuidToAssemblyQualifiedNameObject)
+                && JsonSerializerHelpers.TrySerializeIEnumerable(domFactory, settingsStore.ProbingPaths, JsonSerializerHelpers.StringValueConverter, out IJsonArray probingPathsObject)
+                && TrySerializeComponentTypeToGuidList(domFactory, settingsStore.ComponentTypeToGuidList, out IJsonObject componentTypeToGuidListObject))
             {
-                storeObject.Add(nameof(SettingsStore.MountPoints), mountPointListObject);
-                storeObject.Add(nameof(SettingsStore.ComponentGuidToAssemblyQualifiedName), componentGuidToAssemblyQualifiedNameObject);
-                storeObject.Add(nameof(SettingsStore.ProbingPaths), probingPathsObject);
-                storeObject.Add(nameof(SettingsStore.ComponentTypeToGuidList), componentTypeToGuidListObject);
+                storeObject.SetValue(nameof(SettingsStore.MountPoints), mountPointListObject);
+                storeObject.SetValue(nameof(SettingsStore.ComponentGuidToAssemblyQualifiedName), componentGuidToAssemblyQualifiedNameObject);
+                storeObject.SetValue(nameof(SettingsStore.ProbingPaths), probingPathsObject);
+                storeObject.SetValue(nameof(SettingsStore.ComponentTypeToGuidList), componentTypeToGuidListObject);
 
-                serialized = storeObject.ToString();
+                serialized = storeObject.GetJsonString();
                 return true;
             }
 
@@ -35,29 +32,29 @@ namespace Microsoft.TemplateEngine.Edge.Settings
             return false;
         }
 
-        private static Func<MountPointInfo, JObject> SerializeMountPoint = mountPointInfo =>
+        private static Func<IJsonDocumentObjectModelFactory, MountPointInfo, IJsonObject> SerializeMountPoint = (domFactory, mountPointInfo) =>
         {
-            JObject mountPointObject = new JObject();
+            IJsonObject mountPointObject = domFactory.CreateObject();
 
-            mountPointObject.Add(nameof(MountPointInfo.ParentMountPointId), mountPointInfo.ParentMountPointId);
-            mountPointObject.Add(nameof(MountPointInfo.MountPointFactoryId), mountPointInfo.MountPointFactoryId);
-            mountPointObject.Add(nameof(MountPointInfo.MountPointId), mountPointInfo.MountPointId);
-            mountPointObject.Add(nameof(MountPointInfo.Place), mountPointInfo.Place);
+            mountPointObject.SetValue(nameof(MountPointInfo.ParentMountPointId), mountPointInfo.ParentMountPointId);
+            mountPointObject.SetValue(nameof(MountPointInfo.MountPointFactoryId), mountPointInfo.MountPointFactoryId);
+            mountPointObject.SetValue(nameof(MountPointInfo.MountPointId), mountPointInfo.MountPointId);
+            mountPointObject.SetValue(nameof(MountPointInfo.Place), mountPointInfo.Place);
 
             return mountPointObject;
         };
 
-        private static bool TrySerializeComponentTypeToGuidList(IReadOnlyDictionary<string, HashSet<Guid>> componentTypeToGuidList, out JObject componentTypeToGuidListObject)
+        private static bool TrySerializeComponentTypeToGuidList(IJsonDocumentObjectModelFactory domFactory, IReadOnlyDictionary<string, HashSet<Guid>> componentTypeToGuidList, out IJsonObject componentTypeToGuidListObject)
         {
             try
             {
-                componentTypeToGuidListObject = new JObject();
+                componentTypeToGuidListObject = domFactory.CreateObject();
 
                 foreach (KeyValuePair<string, HashSet<Guid>> componentTypeEntry in componentTypeToGuidList)
                 {
-                    if (JsonSerializerHelpers.TrySerializeIEnumerable(componentTypeEntry.Value, JsonSerializerHelpers.GuidValueConverter, out JArray componentTypeEntryObject))
+                    if (JsonSerializerHelpers.TrySerializeIEnumerable(domFactory, componentTypeEntry.Value, JsonSerializerHelpers.GuidValueConverter, out IJsonArray componentTypeEntryObject))
                     {
-                        componentTypeToGuidListObject.Add(componentTypeEntry.Key, componentTypeEntryObject);
+                        componentTypeToGuidListObject.SetValue(componentTypeEntry.Key, componentTypeEntryObject);
                     }
                     else
                     {

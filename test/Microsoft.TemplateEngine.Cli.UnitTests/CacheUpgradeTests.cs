@@ -1,7 +1,8 @@
-﻿using Microsoft.TemplateEngine.Abstractions;
+using dotnet_new3;
+using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Edge.Settings;
 using Microsoft.TemplateEngine.Mocks;
-using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace Microsoft.TemplateEngine.Cli.UnitTests
@@ -26,7 +27,7 @@ namespace Microsoft.TemplateEngine.Cli.UnitTests
             Assert.Equal(3, cache.TemplateInfo.Count);
         }
 
-        private static JObject CacheDataVersion1000
+        private static IJsonObject CacheDataVersion1000
         {
             get
             {
@@ -156,11 +157,13 @@ namespace Microsoft.TemplateEngine.Cli.UnitTests
   ],
   ""CacheVersion"": ""1.0.0.0""
 }";
-                return JObject.Parse(configString);
+                IJsonDocumentObjectModelFactory domFactory = new JsonDomFactory();
+                domFactory.TryParse(configString, out IJsonToken token);
+                return (IJsonObject)token;
             }
         }
 
-        private static JObject CacheDataOriginalStyle
+        private static IJsonObject CacheDataOriginalStyle
         {
             get
             {
@@ -232,7 +235,9 @@ namespace Microsoft.TemplateEngine.Cli.UnitTests
     }
   ]
 }";
-                return JObject.Parse(configString);
+                IJsonDocumentObjectModelFactory domFactory = new JsonDomFactory();
+                domFactory.TryParse(configString, out IJsonToken token);
+                return (IJsonObject)token;
             }
         }
     }

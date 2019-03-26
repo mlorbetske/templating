@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 {
@@ -17,23 +17,23 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
         // Refers to the Type property value of a concrete IMacro
         public string Generator { get; set; }
 
-        public IReadOnlyDictionary<string, JToken> Parameters { get; set; }
+        public IReadOnlyDictionary<string, IJsonToken> Parameters { get; set; }
 
         public string Type { get; set; }
 
         public IReadOnlyList<IReplacementContext> ReplacementContexts { get; set; }
 
-        public static GeneratedSymbol FromJObject(JObject jObject)
+        public static GeneratedSymbol FromJson(IJsonObject json)
         {
             GeneratedSymbol sym = new GeneratedSymbol
             {
-                Binding = jObject.ToString(nameof(Binding)),
-                Generator = jObject.ToString(nameof(Generator)),
-                DataType = jObject.ToString(nameof(DataType)),
-                Parameters = jObject.ToJTokenDictionary(StringComparer.Ordinal, nameof(Parameters)),
-                Type = jObject.ToString(nameof(Type)),
-                Replaces = jObject.ToString(nameof(Replaces)),
-                ReplacementContexts = SymbolModelConverter.ReadReplacementContexts(jObject)
+                Binding = json.ToString(nameof(Binding)),
+                Generator = json.ToString(nameof(Generator)),
+                DataType = json.ToString(nameof(DataType)),
+                Parameters = json.ToJsonTokenDictionary(StringComparer.Ordinal, nameof(Parameters)),
+                Type = json.ToString(nameof(Type)),
+                Replaces = json.ToString(nameof(Replaces)),
+                ReplacementContexts = SymbolModelConverter.ReadReplacementContexts(json)
             };
 
             return sym;

@@ -1,7 +1,8 @@
+using dotnet_new3;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Abstractions.TemplateUpdates;
 using Microsoft.TemplateEngine.Edge.TemplateUpdates;
 using Microsoft.TemplateEngine.TestHelper;
-using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace Microsoft.TemplateEngine.Edge.UnitTests
@@ -11,7 +12,7 @@ namespace Microsoft.TemplateEngine.Edge.UnitTests
         [Fact(DisplayName = nameof(InstallUnitDescriptorFactoryTryParseFailsGracefullyOnNullDescriptorObjectTest))]
         public void InstallUnitDescriptorFactoryTryParseFailsGracefullyOnNullDescriptorObjectTest()
         {
-            Assert.False(InstallUnitDescriptorFactory.TryParse(EngineEnvironmentSettings, null, out IInstallUnitDescriptor descriptor));
+            Assert.False(InstallUnitDescriptorFactory.TryParse(EngineEnvironmentSettings, null, out _));
         }
 
         [Fact(DisplayName = nameof(InstallUnitDescriptorFactoryFailsGracefullyOnUnknownDescriptorFactoryIdTest))]
@@ -24,8 +25,9 @@ namespace Microsoft.TemplateEngine.Edge.UnitTests
     ""Details"": {
     }
 }";
-            JObject descriptorJObject = JObject.Parse(serializedDescriptor);
-            Assert.False(InstallUnitDescriptorFactory.TryParse(EngineEnvironmentSettings, descriptorJObject, out IInstallUnitDescriptor descriptor));
+            IJsonDocumentObjectModelFactory domFactory = new JsonDomFactory();
+            Assert.True(domFactory.TryParse(serializedDescriptor, out IJsonToken descriptorToken));
+            Assert.False(InstallUnitDescriptorFactory.TryParse(EngineEnvironmentSettings, (IJsonObject)descriptorToken, out _));
         }
 
         [Fact(DisplayName = nameof(InstallUnitDescriptorFactoryFailsGracefullyOnMissingFactoryIdTest))]
@@ -36,8 +38,9 @@ namespace Microsoft.TemplateEngine.Edge.UnitTests
     ""Details"": {
     }
 }";
-            JObject descriptorJObject = JObject.Parse(serializedDescriptor);
-            Assert.False(InstallUnitDescriptorFactory.TryParse(EngineEnvironmentSettings, descriptorJObject, out IInstallUnitDescriptor descriptor));
+            IJsonDocumentObjectModelFactory domFactory = new JsonDomFactory();
+            Assert.True(domFactory.TryParse(serializedDescriptor, out IJsonToken descriptorToken));
+            Assert.False(InstallUnitDescriptorFactory.TryParse(EngineEnvironmentSettings, (IJsonObject)descriptorToken, out _));
         }
 
         [Fact(DisplayName = nameof(InstallUnitDescriptorFactoryFailsGracefullyOnMissingDetailsTest))]
@@ -47,8 +50,10 @@ namespace Microsoft.TemplateEngine.Edge.UnitTests
 {
     ""FactoryId"": ""25AB3648-DC67-4A95-A658-5EEE8ADC2695"",
 }";
-            JObject descriptorJObject = JObject.Parse(serializedDescriptor);
-            Assert.False(InstallUnitDescriptorFactory.TryParse(EngineEnvironmentSettings, descriptorJObject, out IInstallUnitDescriptor descriptor));
+            IJsonDocumentObjectModelFactory domFactory = new JsonDomFactory();
+            domFactory.TryParse(serializedDescriptor, out IJsonToken token);
+            IJsonObject descriptorObject = (IJsonObject)token;
+            Assert.False(InstallUnitDescriptorFactory.TryParse(EngineEnvironmentSettings, descriptorObject, out _));
         }
 
         [Fact(DisplayName = nameof(InstallUnitDescriptorFactoryFailsGracefullyOnStructuredDetailsDataTest))]
@@ -63,8 +68,10 @@ namespace Microsoft.TemplateEngine.Edge.UnitTests
         }
     }
 }";
-            JObject descriptorJObject = JObject.Parse(serializedDescriptor);
-            Assert.False(InstallUnitDescriptorFactory.TryParse(EngineEnvironmentSettings, descriptorJObject, out IInstallUnitDescriptor descriptor));
+            IJsonDocumentObjectModelFactory domFactory = new JsonDomFactory();
+            domFactory.TryParse(serializedDescriptor, out IJsonToken token);
+            IJsonObject descriptorObject = (IJsonObject)token;
+            Assert.False(InstallUnitDescriptorFactory.TryParse(EngineEnvironmentSettings, descriptorObject, out _));
         }
     }
 }

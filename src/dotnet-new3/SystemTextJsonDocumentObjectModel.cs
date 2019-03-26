@@ -74,7 +74,7 @@ namespace dotnet_new3
 
         public IJsonArray CreateArray() => new JsonArray(this);
 
-        public IJsonValue CreateValue(int value) => new WritableJsonValue(value, JsonTokenType.Number, this);
+        public IJsonValue CreateValue(int value) => new WritableJsonValue((double)value, JsonTokenType.Number, this);
 
         public IJsonValue CreateValue(double value) => new WritableJsonValue(value, JsonTokenType.Number, this);
 
@@ -437,7 +437,11 @@ namespace dotnet_new3
 
             public IJsonObject SetValue(string propertyName, IJsonToken value)
             {
-                _properties[propertyName] = value;
+                if (!(value is null))
+                {
+                    _properties[propertyName] = value;
+                }
+
                 return this;
             }
 
@@ -521,9 +525,13 @@ namespace dotnet_new3
                         case JsonValueType.String:
                             return _element.GetString();
                         case JsonValueType.Number:
-                            if (_element.TryGetDouble(out double val))
+                            if (_element.TryGetDouble(out double valDouble))
                             {
-                                return val;
+                                return valDouble;
+                            }
+                            if (_element.TryGetInt64(out long valLong))
+                            {
+                                return (double)valLong;
                             }
                             return 0d;
                         default:
@@ -700,7 +708,7 @@ namespace dotnet_new3
 
             public IEnumerable<KeyValuePair<string, IJsonToken>> Properties()
             {
-                foreach(JsonProperty property in _element.EnumerateObject())
+                foreach (JsonProperty property in _element.EnumerateObject())
                 {
                     yield return new KeyValuePair<string, IJsonToken>(property.Name, AdaptElement(property.Value, Factory));
                 }

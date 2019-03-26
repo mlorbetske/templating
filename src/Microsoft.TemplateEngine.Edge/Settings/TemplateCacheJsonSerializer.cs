@@ -1,24 +1,21 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.TemplateEngine.Abstractions;
-using Newtonsoft.Json.Linq;
+using Microsoft.TemplateEngine.Abstractions.Json;
+using Microsoft.TemplateEngine.Utils.Json;
 
 namespace Microsoft.TemplateEngine.Edge.Settings
 {
-    internal class TemplateCacheJsonSerializer
+    internal static class TemplateCacheJsonSerializer
     {
-        public TemplateCacheJsonSerializer()
+        public static bool TrySerialize(IJsonDocumentObjectModelFactory domFactory, TemplateCache cache, out string serialized)
         {
-        }
+            IJsonObject serializedCache = domFactory.CreateObject();
 
-        public bool TrySerialize(TemplateCache cache, out string serialized)
-        {
-            JObject serializedCache = new JObject();
-
-            List<JObject> templateObjects = new List<JObject>();
+            List<IJsonObject> templateObjects = new List<IJsonObject>();
             foreach (TemplateInfo template in cache.TemplateInfo)
             {
-                if (TrySerializeTemplate(template, out JObject serializedTemplate))
+                if (TrySerializeTemplate(domFactory, template, out IJsonObject serializedTemplate))
                 {
                     templateObjects.Add(serializedTemplate);
                 }
@@ -29,33 +26,33 @@ namespace Microsoft.TemplateEngine.Edge.Settings
                 }
             }
 
-            serializedCache.Add(nameof(TemplateCache.TemplateInfo), JArray.FromObject(templateObjects));
+            serializedCache.SetValue(nameof(TemplateCache.TemplateInfo), templateObjects);
 
-            serialized = serializedCache.ToString();
+            serialized = serializedCache.GetJsonString();
             return true;
         }
 
-        private static bool TrySerializeTemplate(TemplateInfo template, out JObject serializedTemplate)
+        private static bool TrySerializeTemplate(IJsonDocumentObjectModelFactory domFactory, TemplateInfo template, out IJsonObject serializedTemplate)
         {
             try
             {
-                serializedTemplate = new JObject();
-                serializedTemplate.Add(nameof(TemplateInfo.ConfigMountPointId), template.ConfigMountPointId);
-                serializedTemplate.Add(nameof(TemplateInfo.Author), template.Author);
-                serializedTemplate.Add(nameof(TemplateInfo.Classifications), JArray.FromObject(template.Classifications));
-                serializedTemplate.Add(nameof(TemplateInfo.DefaultName), template.DefaultName);
-                serializedTemplate.Add(nameof(TemplateInfo.Description), template.Description);
-                serializedTemplate.Add(nameof(TemplateInfo.Identity), template.Identity);
-                serializedTemplate.Add(nameof(TemplateInfo.GeneratorId), template.GeneratorId);
-                serializedTemplate.Add(nameof(TemplateInfo.GroupIdentity), template.GroupIdentity);
-                serializedTemplate.Add(nameof(TemplateInfo.Precedence), template.Precedence);
-                serializedTemplate.Add(nameof(TemplateInfo.Name), template.Name);
-                serializedTemplate.Add(nameof(TemplateInfo.ShortNameList), JArray.FromObject(template.ShortNameList));
+                serializedTemplate = domFactory.CreateObject();
+                serializedTemplate.SetValue(nameof(TemplateInfo.ConfigMountPointId), template.ConfigMountPointId);
+                serializedTemplate.SetValue(nameof(TemplateInfo.Author), template.Author);
+                serializedTemplate.SetValue(nameof(TemplateInfo.Classifications), template.Classifications);
+                serializedTemplate.SetValue(nameof(TemplateInfo.DefaultName), template.DefaultName);
+                serializedTemplate.SetValue(nameof(TemplateInfo.Description), template.Description);
+                serializedTemplate.SetValue(nameof(TemplateInfo.Identity), template.Identity);
+                serializedTemplate.SetValue(nameof(TemplateInfo.GeneratorId), template.GeneratorId);
+                serializedTemplate.SetValue(nameof(TemplateInfo.GroupIdentity), template.GroupIdentity);
+                serializedTemplate.SetValue(nameof(TemplateInfo.Precedence), template.Precedence);
+                serializedTemplate.SetValue(nameof(TemplateInfo.Name), template.Name);
+                serializedTemplate.SetValue(nameof(TemplateInfo.ShortNameList), template.ShortNameList);
 
-                if (JsonSerializerHelpers.TrySerializeDictionary(template.Tags, JsonSerializerHelpers.StringKeyConverter, SerializeCacheTag, out JObject tagListObject)
+                if (JsonSerializerHelpers.TrySerializeDictionary(domFactory, template.Tags, JsonSerializerHelpers.StringKeyConverter, SerializeCacheTag, out IJsonObject tagListObject)
                         && tagListObject != null)
                 {
-                    serializedTemplate.Add(nameof(TemplateInfo.Tags), tagListObject);
+                    serializedTemplate.SetValue(nameof(TemplateInfo.Tags), tagListObject);
                 }
                 else
                 {
@@ -63,10 +60,10 @@ namespace Microsoft.TemplateEngine.Edge.Settings
                     return false;
                 }
 
-                if (JsonSerializerHelpers.TrySerializeDictionary(template.CacheParameters, JsonSerializerHelpers.StringKeyConverter, SerializeCacheParameter, out JObject cacheParamObject)
+                if (JsonSerializerHelpers.TrySerializeDictionary(domFactory, template.CacheParameters, JsonSerializerHelpers.StringKeyConverter, SerializeCacheParameter, out IJsonObject cacheParamObject)
                         && cacheParamObject != null)
                 {
-                    serializedTemplate.Add(nameof(TemplateInfo.CacheParameters), cacheParamObject);
+                    serializedTemplate.SetValue(nameof(TemplateInfo.CacheParameters), cacheParamObject);
                 }
                 else
                 {
@@ -76,17 +73,17 @@ namespace Microsoft.TemplateEngine.Edge.Settings
 
                 // Note: Parameters are not serialized. Everything needed from them is in Tags & CacheParameters
 
-                serializedTemplate.Add(nameof(TemplateInfo.ConfigPlace), template.ConfigPlace);
-                serializedTemplate.Add(nameof(TemplateInfo.LocaleConfigMountPointId), template.LocaleConfigMountPointId);
-                serializedTemplate.Add(nameof(TemplateInfo.LocaleConfigPlace), template.LocaleConfigPlace);
-                serializedTemplate.Add(nameof(TemplateInfo.HostConfigMountPointId), template.HostConfigMountPointId);
-                serializedTemplate.Add(nameof(TemplateInfo.HostConfigPlace), template.HostConfigPlace);
-                serializedTemplate.Add(nameof(TemplateInfo.ThirdPartyNotices), template.ThirdPartyNotices);
+                serializedTemplate.SetValue(nameof(TemplateInfo.ConfigPlace), template.ConfigPlace);
+                serializedTemplate.SetValue(nameof(TemplateInfo.LocaleConfigMountPointId), template.LocaleConfigMountPointId);
+                serializedTemplate.SetValue(nameof(TemplateInfo.LocaleConfigPlace), template.LocaleConfigPlace);
+                serializedTemplate.SetValue(nameof(TemplateInfo.HostConfigMountPointId), template.HostConfigMountPointId);
+                serializedTemplate.SetValue(nameof(TemplateInfo.HostConfigPlace), template.HostConfigPlace);
+                serializedTemplate.SetValue(nameof(TemplateInfo.ThirdPartyNotices), template.ThirdPartyNotices);
 
-                if (JsonSerializerHelpers.TrySerializeDictionary(template.BaselineInfo, JsonSerializerHelpers.StringKeyConverter, SerializeBaseline, out JObject baselineInfoObject)
+                if (JsonSerializerHelpers.TrySerializeDictionary(domFactory, template.BaselineInfo, JsonSerializerHelpers.StringKeyConverter, SerializeBaseline, out IJsonObject baselineInfoObject)
                         && baselineInfoObject != null)
                 {
-                    serializedTemplate.Add(nameof(TemplateInfo.BaselineInfo), baselineInfoObject);
+                    serializedTemplate.SetValue(nameof(TemplateInfo.BaselineInfo), baselineInfoObject);
                 }
                 else
                 {
@@ -94,8 +91,8 @@ namespace Microsoft.TemplateEngine.Edge.Settings
                     return false;
                 }
 
-                serializedTemplate.Add(nameof(TemplateInfo.HasScriptRunningPostActions), template.HasScriptRunningPostActions);
-                serializedTemplate.Add(nameof(TemplateInfo.ConfigTimestampUtc), template.ConfigTimestampUtc);
+                serializedTemplate.SetValue(nameof(TemplateInfo.HasScriptRunningPostActions), template.HasScriptRunningPostActions);
+                serializedTemplate.SetValue(nameof(TemplateInfo.ConfigTimestampUtc), template.ConfigTimestampUtc.GetValueOrDefault().ToString());
 
                 return true;
             }
@@ -107,55 +104,55 @@ namespace Microsoft.TemplateEngine.Edge.Settings
         }
 
         // TODO: after IAllowDefaultIfOptionWithoutValue is rolled up into ICacheParameter, get rid of the extra check for it.
-        private static Func<ICacheTag, JObject> SerializeCacheTag = tag =>
+        private static Func<IJsonDocumentObjectModelFactory, ICacheTag, IJsonObject> SerializeCacheTag = (domFactory, tag) =>
         {
-            JObject tagObject = new JObject();
-            tagObject.Add(nameof(ICacheTag.Description), tag.Description);
+            IJsonObject tagObject = domFactory.CreateObject();
+            tagObject.SetValue(nameof(ICacheTag.Description), tag.Description);
 
-            if (JsonSerializerHelpers.TrySerializeStringDictionary(tag.ChoicesAndDescriptions, out JObject serializedChoicesAndDescriptions))
+            if (JsonSerializerHelpers.TrySerializeStringDictionary(domFactory, tag.ChoicesAndDescriptions, out IJsonObject serializedChoicesAndDescriptions))
             {
-                tagObject.Add(nameof(ICacheTag.ChoicesAndDescriptions), serializedChoicesAndDescriptions);
+                tagObject.SetValue(nameof(ICacheTag.ChoicesAndDescriptions), serializedChoicesAndDescriptions);
             }
             else
             {
                 tagObject = null;
             }
 
-            tagObject.Add(nameof(ICacheTag.DefaultValue), tag.DefaultValue);
+            tagObject.SetValue(nameof(ICacheTag.DefaultValue), tag.DefaultValue);
 
             if (tag is IAllowDefaultIfOptionWithoutValue tagWithNoValueDefault
                     && !string.IsNullOrEmpty(tagWithNoValueDefault.DefaultIfOptionWithoutValue))
             {
-                tagObject.Add(nameof(IAllowDefaultIfOptionWithoutValue.DefaultIfOptionWithoutValue), tagWithNoValueDefault.DefaultIfOptionWithoutValue);
+                tagObject.SetValue(nameof(IAllowDefaultIfOptionWithoutValue.DefaultIfOptionWithoutValue), tagWithNoValueDefault.DefaultIfOptionWithoutValue);
             }
 
             return tagObject;
         };
 
         // TODO: after IAllowDefaultIfOptionWithoutValue is rolled up into ICacheParameter, get rid of the extra check for it.
-        private static Func<ICacheParameter, JObject> SerializeCacheParameter = param =>
+        private static Func<IJsonDocumentObjectModelFactory, ICacheParameter, IJsonObject> SerializeCacheParameter = (domFactory, param) =>
         {
-            JObject paramObject = new JObject();
-            paramObject.Add(nameof(ICacheParameter.DataType), param.DataType);
-            paramObject.Add(nameof(ICacheParameter.DefaultValue), param.DefaultValue);
-            paramObject.Add(nameof(ICacheParameter.Description), param.Description);
+            IJsonObject paramObject = domFactory.CreateObject();
+            paramObject.SetValue(nameof(ICacheParameter.DataType), param.DataType);
+            paramObject.SetValue(nameof(ICacheParameter.DefaultValue), param.DefaultValue);
+            paramObject.SetValue(nameof(ICacheParameter.Description), param.Description);
 
             if (param is IAllowDefaultIfOptionWithoutValue paramWithNoValueDefault
                 && !string.IsNullOrEmpty(paramWithNoValueDefault.DefaultIfOptionWithoutValue))
             {
-                paramObject.Add(nameof(IAllowDefaultIfOptionWithoutValue.DefaultIfOptionWithoutValue), paramWithNoValueDefault.DefaultIfOptionWithoutValue);
+                paramObject.SetValue(nameof(IAllowDefaultIfOptionWithoutValue.DefaultIfOptionWithoutValue), paramWithNoValueDefault.DefaultIfOptionWithoutValue);
             }
 
             return paramObject;
         };
 
-        private static Func<IBaselineInfo, JObject> SerializeBaseline = baseline =>
+        private static Func<IJsonDocumentObjectModelFactory, IBaselineInfo, IJsonObject> SerializeBaseline = (domFactory, baseline) =>
         {
-            JObject baselineObject = new JObject();
-            baselineObject.Add(nameof(IBaselineInfo.Description), baseline.Description);
-            if (JsonSerializerHelpers.TrySerializeStringDictionary(baseline.DefaultOverrides, out JObject defaultsObject))
+            IJsonObject baselineObject = domFactory.CreateObject();
+            baselineObject.SetValue(nameof(IBaselineInfo.Description), baseline.Description);
+            if (JsonSerializerHelpers.TrySerializeStringDictionary(domFactory, baseline.DefaultOverrides, out IJsonObject defaultsObject))
             {
-                baselineObject.Add(nameof(IBaselineInfo.DefaultOverrides), defaultsObject);
+                baselineObject.SetValue(nameof(IBaselineInfo.DefaultOverrides), defaultsObject);
             }
             else
             {

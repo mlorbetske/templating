@@ -1,13 +1,14 @@
 using System.Collections.Generic;
+using dotnet_new3;
 using Microsoft.TemplateEngine.Abstractions;
+using Microsoft.TemplateEngine.Abstractions.Json;
 using Microsoft.TemplateEngine.Core;
 using Microsoft.TemplateEngine.Core.Contracts;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros;
 using Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros.Config;
 using Microsoft.TemplateEngine.TestHelper;
-using static Microsoft.TemplateEngine.Orchestrator.RunnableProjects.RunnableProjectGenerator;
-using Newtonsoft.Json.Linq;
 using Xunit;
+using static Microsoft.TemplateEngine.Orchestrator.RunnableProjects.RunnableProjectGenerator;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.MacroTests
 {
@@ -28,8 +29,7 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Macro
             ConstantMacro macro = new ConstantMacro();
             macro.EvaluateConfig(EngineEnvironmentSettings, variables, macroConfig, parameters, setter);
 
-            ITemplateParameter constParameter;
-            Assert.True(parameters.TryGetParameterDefinition(variableName, out constParameter));
+            Assert.True(parameters.TryGetParameterDefinition(variableName, out ITemplateParameter constParameter));
             string constParamValue = (parameters.ResolvedValues[constParameter]).ToString();
             Assert.Equal(constParamValue, value);
         }
@@ -39,8 +39,12 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Macro
         {
             string variableName = "myConstant";
             string value = "1048576";
-            Dictionary<string, JToken> jsonParameters = new Dictionary<string, JToken>();
-            jsonParameters.Add("value", value);
+
+            IJsonDocumentObjectModelFactory domFactory = new JsonDomFactory();
+            Dictionary<string, IJsonToken> jsonParameters = new Dictionary<string, IJsonToken>
+            {
+                { "value", domFactory.CreateValue(value) }
+            };
             GeneratedSymbolDeferredMacroConfig deferredConfig = new GeneratedSymbolDeferredMacroConfig("ConstantMacro", null, variableName, jsonParameters);
 
             IVariableCollection variables = new VariableCollection();
@@ -51,8 +55,8 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.UnitTests.Macro
             ConstantMacro macro = new ConstantMacro();
             IMacroConfig realConfig = macro.CreateConfig(EngineEnvironmentSettings, deferredConfig);
             macro.EvaluateConfig(EngineEnvironmentSettings, variables, realConfig, parameters, setter);
-            ITemplateParameter constParameter;
-            Assert.True(parameters.TryGetParameterDefinition(variableName, out constParameter));
+
+            Assert.True(parameters.TryGetParameterDefinition(variableName, out ITemplateParameter constParameter));
             string constParamValue = (parameters.ResolvedValues[constParameter]).ToString();
             Assert.Equal(constParamValue, value);
         }

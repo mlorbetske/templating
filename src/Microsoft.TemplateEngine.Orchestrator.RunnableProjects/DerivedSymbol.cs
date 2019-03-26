@@ -1,5 +1,5 @@
 using Microsoft.TemplateEngine.Abstractions;
-using Newtonsoft.Json.Linq;
+using Microsoft.TemplateEngine.Abstractions.Json;
 
 namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 {
@@ -11,12 +11,12 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects
 
         public string ValueSource { get; set; }
 
-        public static ISymbolModel FromJObject(JObject jObject, IParameterSymbolLocalizationModel localization, string defaultOverride)
+        public static ISymbolModel FromJson(IJsonObject json, IParameterSymbolLocalizationModel localization, string defaultOverride)
         {
-            DerivedSymbol symbol = FromJObject<DerivedSymbol>(jObject, localization, defaultOverride);
+            DerivedSymbol symbol = FromJson<DerivedSymbol>(json, localization, defaultOverride);
 
-            symbol.ValueTransform = jObject.ToString(nameof(ValueTransform));
-            symbol.ValueSource = jObject.ToString(nameof(ValueSource));
+            symbol.ValueTransform = json.ToString(nameof(ValueTransform));
+            symbol.ValueSource = json.ToString(nameof(ValueSource));
 
             return symbol;
         }

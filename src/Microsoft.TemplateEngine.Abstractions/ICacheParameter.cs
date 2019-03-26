@@ -1,6 +1,8 @@
+using Microsoft.TemplateEngine.Abstractions.Json;
+
 namespace Microsoft.TemplateEngine.Abstractions
 {
-    public interface ICacheParameter
+    public interface ICacheParameter : IJsonSerializable<ICacheParameter>
     {
         string DataType { get; }
 
